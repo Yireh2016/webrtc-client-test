@@ -1,13 +1,13 @@
 import React from "react";
-import { H2 } from "./Texts";
+import { H2, P2 } from "./Texts";
 import UserChatButton from "./UserChatButton";
 import styled from "styled-components";
 
-const ChatPal = ({ userId, userList }) => {
+const ChatPal = ({ user, userList }) => {
   return (
     <div style={{ boxSizing: " border-box" }}>
       <TitleLayout>
-        <H2>{`Welcome, ${userId}`}</H2>
+        <H2>{`Welcome, ${user}`}</H2>
         <H2
           style={{
             paddingTop: "40px",
@@ -16,15 +16,31 @@ const ChatPal = ({ userId, userList }) => {
         >
           Select your chat pal.
         </H2>
+        {userList && userList?.length < 2 && (
+          <P2
+            style={{
+              paddingTop: "40px",
+              marginBottom: "70px",
+            }}
+          >
+            There are no pals for you to chat with yet.
+          </P2>
+        )}
       </TitleLayout>
 
       <div>
-        {userList.length > 0 &&
-          userList.map((user, index) => (
-            <div key={index}>
-              <UserChatButton {...{ user, index }} />
-            </div>
-          ))}
+        {typeof userList !== "string" &&
+          userList &&
+          userList?.length > 0 &&
+          userList
+            .filter((_user) => {
+              return _user.user_id !== user;
+            })
+            .map((_user, index) => (
+              <div key={index}>
+                <UserChatButton {...{ user: _user, index }} />
+              </div>
+            ))}
       </div>
     </div>
   );

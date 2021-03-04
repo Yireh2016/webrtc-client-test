@@ -1,5 +1,4 @@
 import "./App.css";
-import { io } from "socket.io-client";
 import React from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import RegisterLogic from "./pages/register/RegisterLogic";
@@ -7,29 +6,35 @@ import LobbyLogic from "./pages/lobby/LobbyLogic";
 import { ThemeProvider } from "styled-components";
 import { theme } from "./constants/theme";
 import { routes } from "./constants/routes";
-
-export const WebSocketContext = React.createContext();
+import { Provider } from "react-redux";
+import store from "./store";
+import WebSocketWrapper from "./wrappers/WebSocketWrapper";
+import AuthWrapper from "./wrappers/AuthWrapper";
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <WebSocketContext.Provider value={io}>
-        <Router>
-          <Switch>
-            {/* <Route path="/about">
+    <Provider store={store}>
+      <ThemeProvider theme={theme}>
+        <WebSocketWrapper>
+          <Router>
+            <Switch>
+              <AuthWrapper>
+                {/* <Route path="/about">
               <About />
             </Route>
              */}
-            <Route exact path={routes.LOBBY}>
-              <LobbyLogic />
-            </Route>
-            <Route exact path="/">
-              <RegisterLogic />
-            </Route>
-          </Switch>
-        </Router>
-      </WebSocketContext.Provider>
-    </ThemeProvider>
+                <Route exact path={routes.LOBBY}>
+                  <LobbyLogic />
+                </Route>
+                <Route exact path="/">
+                  <RegisterLogic />
+                </Route>
+              </AuthWrapper>
+            </Switch>
+          </Router>
+        </WebSocketWrapper>
+      </ThemeProvider>
+    </Provider>
   );
 }
 

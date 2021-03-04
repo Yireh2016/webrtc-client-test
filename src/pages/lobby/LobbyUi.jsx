@@ -2,12 +2,11 @@ import React from "react";
 import styled from "styled-components";
 import ChatPal from "../../components/ChatPal";
 
-const LobbyUi = ({ isMobible, userList, userId }) => {
-  console.log({ isMobible });
+const LobbyUi = ({ isMobible, userList, user }) => {
   return (
     <LobbyLayout>
       <LeftAside id="LeftAside">
-        <ChatPal userId={userId} userList={userList} />
+        <ChatPal user={user} userList={userList} />
       </LeftAside>
     </LobbyLayout>
   );

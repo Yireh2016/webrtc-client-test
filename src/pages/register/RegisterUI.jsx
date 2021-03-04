@@ -2,14 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { H2 } from "../../components/Texts";
 
-const RegisterUI = ({
-  setUserId,
-  userId,
-  onDone,
-  userList,
-  webSocketId,
-  callOut,
-}) => {
+const RegisterUI = ({ setUserId, userId, onDone }) => {
   return (
     <CenteredLayout id="CenteredLayout">
       <FormLayout id="formlayout">
@@ -26,18 +19,6 @@ const RegisterUI = ({
           <Button onClick={() => onDone(userId)}>Done</Button>
         </div>
       </FormLayout>
-      <div>
-        {userList.length > 0 &&
-          userList.map(({ user_id }) => {
-            return (
-              <div key={user_id}>
-                {webSocketId === user_id ? null : (
-                  <h2 onClick={() => callOut(user_id)}>{user_id}</h2>
-                )}
-              </div>
-            );
-          })}
-      </div>
     </CenteredLayout>
   );
 };

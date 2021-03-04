@@ -6,7 +6,7 @@ const UserChatButton = ({ user, index }) => {
   return (
     <UserLayout>
       <UserContainer {...{ isMarginTop: index }}>
-        <P2>{user.userId}</P2>
+        <P2>{user.user_id}</P2>
       </UserContainer>
     </UserLayout>
   );
