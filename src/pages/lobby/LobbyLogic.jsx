@@ -1,19 +1,18 @@
-import React from "react";
+import React, { useContext } from "react";
 import LobbyUi from "./LobbyUi";
 import useIsMobile from "../../hooks/useIsMobile";
-import { getUserList, getUser } from "../../store/selectors";
-import { useSelector } from "react-redux";
+import { observer } from "mobx-react-lite";
+import { StoreContext } from "../../wrappers/MobxWrapper";
 
-const LobbyLogic = () => {
-  const userList = useSelector(getUserList);
-  const user = useSelector(getUser);
+const LobbyLogic = observer(() => {
+  const { username, userList } = useContext(StoreContext);
 
   const isMobible = useIsMobile();
   return (
     <div>
-      <LobbyUi isMobible={isMobible} {...{ user, userList }} />
+      <LobbyUi isMobible={isMobible} {...{ user: username, userList }} />
     </div>
   );
-};
+});
 
 export default LobbyLogic;

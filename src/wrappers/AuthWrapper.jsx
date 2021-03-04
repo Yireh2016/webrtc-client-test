@@ -1,11 +1,9 @@
 import React, { useEffect } from "react";
-import { useSelector } from "react-redux";
-import { getUser } from "../store/selectors";
 import { useHistory } from "react-router-dom";
 import { routes } from "../constants/routes";
 
 const AuthWrapper = ({ children }) => {
-  const user = useSelector(getUser);
+  const user = "test";
   const history = useHistory();
 
   useEffect(() => {

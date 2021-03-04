@@ -6,27 +6,22 @@ import LobbyLogic from "./pages/lobby/LobbyLogic";
 import { ThemeProvider } from "styled-components";
 import { theme } from "./constants/theme";
 import { routes } from "./constants/routes";
-import { Provider } from "react-redux";
-import store from "./store";
 import WebSocketWrapper from "./wrappers/WebSocketWrapper";
 import AuthWrapper from "./wrappers/AuthWrapper";
+import MobxWrapper from "./wrappers/MobxWrapper";
 
 function App() {
   return (
-    <Provider store={store}>
+    <MobxWrapper>
       <ThemeProvider theme={theme}>
         <WebSocketWrapper>
           <Router>
             <Switch>
               <AuthWrapper>
-                {/* <Route path="/about">
-              <About />
-            </Route>
-             */}
                 <Route exact path={routes.LOBBY}>
                   <LobbyLogic />
                 </Route>
-                <Route exact path="/">
+                <Route exact path={routes.HOME}>
                   <RegisterLogic />
                 </Route>
               </AuthWrapper>
@@ -34,7 +29,7 @@ function App() {
           </Router>
         </WebSocketWrapper>
       </ThemeProvider>
-    </Provider>
+    </MobxWrapper>
   );
 }
 

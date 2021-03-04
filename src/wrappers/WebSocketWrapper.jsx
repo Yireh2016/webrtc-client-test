@@ -1,23 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { io } from "socket.io-client";
 import { WEBSOCKET_SERVER } from "../constants/websocketServer";
-import { useSelector } from "react-redux";
-import { getUser } from "../store/selectors";
-import { setUserList } from "../store/actions";
-import { useHistory } from "react-router-dom";
-import { routes } from "../constants/routes";
+import { observer } from "mobx-react-lite";
+import { StoreContext } from "./MobxWrapper";
 
 const WebSocketContext = React.createContext();
 
-const WebSocketWrapper = ({ children }) => {
-  const user = useSelector(getUser);
+const WebSocketWrapper = observer((props) => {
+  const { userId, setUserList } = useContext(StoreContext);
   const [webSocket, setWebSocket] = useState();
 
   useEffect(() => {
-    if (user) {
+    console.log("WebSocketWrapper userId", userId, setUserList);
+    if (userId) {
       const socket = io(WEBSOCKET_SERVER, {
         query: {
-          id: user,
+          id: userId,
         },
       });
       setWebSocket(socket);
@@ -40,19 +38,72 @@ const WebSocketWrapper = ({ children }) => {
             setUserList(...args);
             break;
 
+          case "user-already-exist":
+            // setUserList(...args);
+            window.alert("user-already-exist");
+            break;
           default:
             break;
         }
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [userId]);
 
   return (
     <WebSocketContext.Provider value={webSocket}>
-      {children}
+      {props.children}
     </WebSocketContext.Provider>
   );
-};
+});
 
 export default WebSocketWrapper;
+// const WebSocketWrapper = ({ children }) => {
+//   const user = useSelector(getUser);
+//   const [webSocket, setWebSocket] = useState();
+
+//   useEffect(() => {
+//     if (user) {
+//       const socket = io(WEBSOCKET_SERVER, {
+//         query: {
+//           id: user,
+//         },
+//       });
+//       setWebSocket(socket);
+//       socket.connect();
+//       socket.on("connect", () => {
+//         console.log(socket.id);
+//       });
+
+//       socket.on("connect_error", () => {
+//         console.error("Error connecting");
+//       });
+
+//       socket.on("disconnect", () => {
+//         console.log(socket.id);
+//       });
+
+//       socket.onAny((eventName, ...args) => {
+//         switch (eventName) {
+//           case "user-list":
+//             setUserList(...args);
+//             break;
+
+//           case "user-already-exist":
+//             // setUserList(...args);
+//             window.alert("user-already-exist");
+//             break;
+//           default:
+//             break;
+//         }
+//       });
+//     }
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [user]);
+
+//   return (
+//     <WebSocketContext.Provider value={webSocket}>
+//       {children}
+//     </WebSocketContext.Provider>
+//   );
+// };

@@ -1,31 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import RegisterUI from "./RegisterUI";
 import { useHistory } from "react-router-dom";
 import { routes } from "../../constants/routes";
-import { setUser } from "../../store/actions";
+import { observer } from "mobx-react-lite";
+import { StoreContext } from "../../wrappers/MobxWrapper";
 
-const RegisterLogic = () => {
+const RegisterLogic = observer(() => {
+  const context = useContext(StoreContext);
+  const { setUsername } = context;
+
   const [userId, setUserId] = useState("");
   const history = useHistory();
 
+  console.log({ context });
   const onDone = (id) => {
     if (id) {
-      setUser(id);
+      setUsername(id);
       history.push(routes.LOBBY);
     }
   };
 
   return (
-    <div>
-      <RegisterUI
-        {...{
-          setUserId,
-          userId,
-          onDone,
-        }}
-      />
-    </div>
+    <RegisterUI
+      {...{
+        setUserId,
+        userId,
+        onDone,
+      }}
+    />
   );
-};
+});
 
 export default RegisterLogic;
