@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { H2 } from "../../components/Texts";
 
-const RegisterUI = ({ setUserId, userId, onDone }) => {
+const RegisterUI = ({ setUserId, userId, onDone, onUserKeyDown }) => {
   return (
     <CenteredLayout id="CenteredLayout">
       <FormLayout id="formlayout">
@@ -13,6 +13,7 @@ const RegisterUI = ({ setUserId, userId, onDone }) => {
             type="text"
             onChange={({ target }) => setUserId(target.value)}
             value={userId}
+            onKeyDown={onUserKeyDown}
           />
         </div>
         <div>

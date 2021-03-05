@@ -2,9 +2,12 @@ import React from "react";
 import { P2 } from "./Texts";
 import styled from "styled-components";
 
-const UserChatButton = ({ user, index }) => {
+const UserChatButton = ({ user, index, callRemoteUserHandler }) => {
   return (
-    <UserLayout>
+    <UserLayout
+      onClick={() => callRemoteUserHandler(user)}
+      data-id="UserLayout"
+    >
       <UserContainer {...{ isMarginTop: index }}>
         <P2>{user.user_id}</P2>
       </UserContainer>
