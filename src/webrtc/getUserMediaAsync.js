@@ -1,6 +1,6 @@
 const getUserMediaAsync = async (navigator) => {
   const constraints = {
-    audio: true,
+    audio: false,
     video: true,
   };
   try {

@@ -14,8 +14,8 @@ const LobbyUi = ({
   lobbyVideo = null,
   userList,
   user,
-  isVideoCallModal,
-  callRemoteUserHandler,
+  isLobbyVideoCallModal,
+  onUserClick,
   isIncommigCallModal,
   onAcceptIncommingCall,
   onRejectIncommingCall,
@@ -30,7 +30,7 @@ const LobbyUi = ({
           onRejectIncommingCall={onRejectIncommingCall}
         />
       )}
-      {isVideoCallModal && (
+      {isLobbyVideoCallModal && (
         <VideoModal
           {...{
             toogleCamera,
@@ -42,11 +42,7 @@ const LobbyUi = ({
         />
       )}
       <LeftAside id="LeftAside">
-        <ChatPal
-          user={user}
-          userList={userList}
-          callRemoteUserHandler={callRemoteUserHandler}
-        />
+        <ChatPal user={user} userList={userList} onUserClick={onUserClick} />
         {lobbyVideo}
       </LeftAside>
     </LobbyLayout>

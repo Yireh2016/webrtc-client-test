@@ -3,16 +3,19 @@ import { makeObservable, observable, action } from "mobx";
 export class Store {
   username = "";
   userList = [];
-  isVideoCallModal = false;
+  isLobbyVideoCallModal = false;
+  incommingCallCaller = {};
 
   constructor() {
     makeObservable(this, {
       username: observable,
       userList: observable,
-      isVideoCallModal: observable,
+      isLobbyVideoCallModal: observable,
+      incommingCallCaller: observable,
       setUsername: action.bound,
       setUserList: action.bound,
-      setIsVideoCallModal: action.bound,
+      setIsLobbyVideoCallModal: action.bound,
+      setIncommingCallCaller: action.bound,
     });
   }
 
@@ -20,8 +23,12 @@ export class Store {
     this.username = user;
   }
 
-  setIsVideoCallModal(modalShow) {
-    this.isVideoCallModal = modalShow;
+  setIsLobbyVideoCallModal(modalShow) {
+    this.isLobbyVideoCallModal = modalShow;
+  }
+
+  setIncommingCallCaller(caller) {
+    this.incommingCallCaller = caller;
   }
 
   setUserList(list) {

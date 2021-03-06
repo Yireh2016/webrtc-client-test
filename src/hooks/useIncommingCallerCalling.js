@@ -5,7 +5,7 @@ const peerStatus = {
   AVAILABLE: "idle",
 };
 
-const useIncommingCall = ({
+const useIncommingCallerCalling = ({
   signaling,
   calleeStatus = peerStatus.AVAILABLE,
 }) => {
@@ -15,7 +15,7 @@ const useIncommingCall = ({
     signaling &&
       signaling.listen((eventName, ...args) => {
         if (
-          eventName.match(signalingEvents.CALLING) &&
+          eventName.match(signalingEvents.INCOMMING_CALLER_CALLING) &&
           calleeStatus.match(peerStatus.AVAILABLE)
         ) {
           setCaller(args[0].caller);
@@ -26,4 +26,4 @@ const useIncommingCall = ({
   return caller;
 };
 
-export default useIncommingCall;
+export default useIncommingCallerCalling;

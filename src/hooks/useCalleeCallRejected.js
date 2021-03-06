@@ -1,14 +1,18 @@
 import { signalingEvents } from "../constants/signalingEvents";
 import { useEffect } from "react";
 
-const useCalleeCallRejected = ({ signaling, setIsVideoCallModal, endCall }) => {
+const useCalleeCallRejected = ({
+  signaling,
+  setIsLobbyVideoCallModal,
+  endCall,
+}) => {
   useEffect(() => {
     if (signaling) {
       signaling.listen((eventName, ...args) => {
         switch (eventName) {
           case signalingEvents.CALLEE_CALL_REJECTED:
             console.log("CALLEE_CALL_REJECTED", { args });
-            setIsVideoCallModal(false);
+            setIsLobbyVideoCallModal(false);
             endCall();
             break;
           default:

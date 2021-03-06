@@ -3,7 +3,7 @@ import { H2, P2 } from "./Texts";
 import UserChatButton from "./UserChatButton";
 import styled from "styled-components";
 
-const ChatPal = ({ user, userList, callRemoteUserHandler }) => {
+const ChatPal = ({ user, userList, onUserClick }) => {
   return (
     <div style={{ boxSizing: " border-box" }}>
       <TitleLayout>
@@ -38,9 +38,7 @@ const ChatPal = ({ user, userList, callRemoteUserHandler }) => {
             })
             .map((_user, index) => (
               <div key={index}>
-                <UserChatButton
-                  {...{ user: _user, index, callRemoteUserHandler }}
-                />
+                <UserChatButton {...{ user: _user, index, onUserClick }} />
               </div>
             ))}
       </div>

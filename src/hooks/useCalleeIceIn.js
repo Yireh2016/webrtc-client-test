@@ -1,17 +1,16 @@
 import { signalingEvents } from "../constants/signalingEvents";
 import { useEffect } from "react";
-import answerInit from "../webrtc/answerInit";
 
-const useCallerIceRequest = ({ signaling }) => {
+const useCalleeIceIn = ({ signaling, setIsLobbyVideoCallModal, endCall }) => {
   useEffect(() => {
     if (signaling) {
       signaling.listen((eventName, ...args) => {
         switch (eventName) {
-          case signalingEvents.CALLER_ICE_REQUEST:
-            console.log("CALLER_ICE_REQUEST", { args });
-            answerInit(...args, signaling);
+          case signalingEvents.CALLEE_CALL_REJECTED:
+            console.log("CALLEE_CALL_REJECTED", { args });
+            setIsLobbyVideoCallModal(false);
+            endCall();
             break;
-
           default:
             break;
         }
@@ -21,4 +20,4 @@ const useCallerIceRequest = ({ signaling }) => {
   }, [signaling]);
 };
 
-export default useCallerIceRequest;
+export default useCalleeIceIn;

@@ -1,73 +1,113 @@
-import React, { useContext, useRef, useEffect, useState } from "react";
-import LobbyUi from "./LobbyUi";
-import useIsMobile from "../../hooks/useIsMobile";
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useContext, useRef, useEffect, useState, useMemo } from "react";
 import { observer } from "mobx-react-lite";
-import { StoreContext } from "../../wrappers/MobxWrapper";
-import { signalingEvents } from "../../constants/signalingEvents";
+import { useHistory } from "react-router-dom";
 
+import LobbyUi from "./LobbyUi";
+
+import { StoreContext } from "../../wrappers/MobxWrapper";
 import { Signaling } from "../../wrappers/WebSocketWrapper";
+
+import { signalingEvents } from "../../constants/signalingEvents";
+import { routes } from "../../constants/routes";
+
 import stopStreamedVideo from "../../webrtc/stopStreamedVideo";
+
+import useIsMobile from "../../hooks/useIsMobile";
 import useCalleeCallRejected from "../../hooks/useCalleeCallRejected";
 import useCalleeIceResponse from "../../hooks/useCalleeIceResponse";
-import useCallerIceRequest from "../../hooks/useCallerIceRequest";
-import useIncommingCall from "../../hooks/useIncommingCall";
-import useAcceptIncommingCall from "../../hooks/useAcceptIncommingCall";
-import answerInit from "../../webrtc/answerInit";
+import useIncommingIce from "../../hooks/useIncommingIce";
+import useIncommingCalleeAnswer from "../../hooks/useIncommingCalleeAnswer";
+import useIncommingCalleeCallAccepted from "../../hooks/useIncommingCalleeCallAccepted";
+import useIncommingCallerCalling from "../../hooks/useIncommingCallerCalling";
+import useSendIce from "../../hooks/useSendIce";
 
 const LobbyLogic = observer(() => {
-  const [callerPeerConnection, setCallerPeerConnection] = useState(null);
+  const history = useHistory();
+  // const [calleePeerConnection, setCalleePeerConnection] = useState(null);
+  // const [callerPeerConnection, setCallerPeerConnection] = useState(null);
   const {
     username,
     userList,
-    isVideoCallModal,
-    setIsVideoCallModal,
+    isLobbyVideoCallModal,
+    setIsLobbyVideoCallModal,
+    setIncommingCallCaller,
   } = useContext(StoreContext);
   let remoteVideoRef = useRef();
   let localVideoRef = useRef();
   const isMobible = useIsMobile();
   const signaling = useContext(Signaling);
   const [callee, setCallee] = useState();
-  const [callerId, setCallerId] = useState("");
-  const [userId, setUserId] = useState("");
   const [isIncommigCallModal, setIsIncommigCallModal] = useState(false);
-  const [callerIceList, setCallerIceList] = useState([]);
+  const caller = useMemo(
+    () => userList.filter((_user) => _user.user_id === username)[0],
+    [userList, username]
+  );
 
-  const endCall = () => {
-    callerPeerConnection.close();
-    setIsVideoCallModal(false);
-    stopStreamedVideo(localVideoRef.current);
+  const asyncCallerCreateOffer = async (peerConnection) => {
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    signaling.send(signalingEvents.SEND_CALLER_OFFER, {
+      caller,
+      callee,
+      offer,
+    });
   };
 
-  useCallerIceRequest({ signaling });
+  useIncommingCalleeAnswer({ signaling, callerPeerConnection });
 
-  useCalleeIceResponse({ signaling });
-
-  useCalleeCallRejected({ signaling, setIsVideoCallModal, endCall });
-
-  const caller = useIncommingCall({ signaling });
-
-  useAcceptIncommingCall({
+  useSendIce({
     signaling,
-    localVideoRef,
+    callerPeerConnection,
     callee,
     caller,
-    userList,
-    username,
-    setCallerPeerConnection,
+    emitter: "CALLER",
+  });
+
+  useIncommingCalleeCallAccepted({
+    signaling,
+    callerPeerConnection,
+  });
+
+  useIncommingIce({
+    signaling,
+    callerPeerConnection,
   });
 
   useEffect(() => {
-    caller && setIsIncommigCallModal(true);
-  }, [caller]);
+    callerPeerConnection && asyncCallerCreateOffer(calleePeerConnection);
+  }, [callerPeerConnection]);
 
-  const callRemoteUserHandler = async (callee) => {
-    setIsVideoCallModal(true);
+  useEffect(() => {
+    if (calleePeerConnection) {
+      asyncCallerCreateOffer(calleePeerConnection);
+    }
+  }, [calleePeerConnection]);
 
-    signaling.send(signalingEvents.CALLING, {
-      caller: userList.filter((_user) => _user.user_id === username)[0],
+  useCalleeIceResponse({ signaling });
+
+  useCalleeCallRejected({ signaling, setIsLobbyVideoCallModal, endCall });
+
+  const incommingCallCaller = useIncommingCallerCalling({ signaling });
+
+  useEffect(() => {
+    incommingCallCaller && setIsIncommigCallModal(true);
+  }, [incommingCallCaller]);
+
+  const onUserClick = async (callee) => {
+    setIsLobbyVideoCallModal(true);
+
+    signaling.send(signalingEvents.SEND_CALLER_CALLING, {
+      caller,
       callee,
     });
     setCallee(callee);
+  };
+
+  const endCall = () => {
+    // callerPeerConnection.close();
+    setIsLobbyVideoCallModal(false);
+    stopStreamedVideo(localVideoRef.current);
   };
 
   const toogleCamera = () => {};
@@ -76,12 +116,8 @@ const LobbyLogic = observer(() => {
 
   const onAcceptIncommingCall = async () => {
     setIsIncommigCallModal(false);
-
-    signaling.send(signalingEvents.ACCEPT_INCOMMING_CALL, {
-      caller,
-      callee: userList.filter((_user) => _user.user_id === username)[0],
-    });
-    answerInit();
+    setIncommingCallCaller(incommingCallCaller);
+    history.push(routes.INCOMMING_CALL);
   };
   const onRejectIncommingCall = () => {
     const { socket } = signaling;
@@ -103,10 +139,10 @@ const LobbyLogic = observer(() => {
         {...{
           user: username,
           userList,
-          callRemoteUserHandler,
+          onUserClick,
           remoteVideo,
           localVideo,
-          isVideoCallModal,
+          isLobbyVideoCallModal,
           toogleCamera,
           endCall,
           toogleAudio,
