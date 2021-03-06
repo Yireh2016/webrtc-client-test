@@ -21,15 +21,17 @@ class SignalingService {
     this.socket.on("disconnect", () => {
       console.log(this.socket.id);
     });
+    console.log("new SignalingService");
   }
 
   send(message, data) {
+    console.log(`signaling send`, { message, data });
     this.socket.emit(message, data);
   }
 
   listen(callback) {
     this.socket.onAny((eventName, ...args) => {
-      console.log({ eventName, ...args });
+      console.log("listen", { eventName, ...args });
       callback && callback(eventName, ...args);
     });
   }
@@ -43,7 +45,7 @@ const WebSocketWrapper = observer(({ children }) => {
   const context = useContext(StoreContext);
   const [webSocket, setWebSocket] = useState();
   const { username } = context;
-
+  console.log("WebSocketWrapper", { webSocket });
   useEffect(() => {
     if (username) {
       const socket = io(WEBSOCKET_SERVER, {

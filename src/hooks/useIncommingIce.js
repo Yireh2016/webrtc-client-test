@@ -1,6 +1,6 @@
 import { signalingEvents } from "../constants/signalingEvents";
 import { useEffect } from "react";
-import addIceCandidateCandidate from "../webrCandidatetc/addIceCandidate";
+import addIceCandidateCandidate from "../webrtc/addIceCandidate";
 
 const useIncommingIce = ({ signaling, peerConnection }) => {
   useEffect(() => {

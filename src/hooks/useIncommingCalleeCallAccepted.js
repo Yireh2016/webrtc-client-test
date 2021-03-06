@@ -1,25 +1,18 @@
 import { useEffect, useState } from "react";
 import { signalingEvents } from "../constants/signalingEvents";
-import peerConnectionHandler from "../webrtc/peerConnectionHandler";
-import insertStreamOnVideo from "../webrtc/insertStreamOnVideo";
 
-const useIncommingCalleeCallAccepted = ({
-  signaling,
-  localVideoRef,
-  setCallerPeerConnection,
-}) => {
+const useIncommingCalleeCallAccepted = ({ signaling }) => {
+  const [iscalleeCallAccepted, setIscalleeCallAccepted] = useState(false);
   useEffect(() => {
     signaling &&
       signaling.listen((eventName) => {
         if (eventName.match(signalingEvents.INCOMMING_CALLEE_CALL_ACEPTED)) {
-          insertStreamOnVideo(localVideoRef.current, (stream) => {
-            peerConnectionHandler(stream, signaling, setCallerPeerConnection);
-          });
+          setIscalleeCallAccepted(true);
         }
       });
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signaling]);
+  return iscalleeCallAccepted;
 };
 
 export default useIncommingCalleeCallAccepted;

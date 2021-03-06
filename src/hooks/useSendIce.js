@@ -3,7 +3,7 @@ import { signalingEvents } from "../constants/signalingEvents";
 
 const useSendIce = ({ signaling, peerConnection, callee, caller, emitter }) => {
   useEffect(() => {
-    if (signaling) {
+    if (signaling && peerConnection) {
       peerConnection.onicecandidate = ({ candidate }) => {
         candidate &&
           signaling.send(signalingEvents[`SEND_${emitter}_ICE`], {
@@ -14,7 +14,7 @@ const useSendIce = ({ signaling, peerConnection, callee, caller, emitter }) => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signaling]);
+  }, [signaling, peerConnection]);
 };
 
 export default useSendIce;

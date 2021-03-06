@@ -9,7 +9,7 @@ const useCreateCalleePeerConection = ({
 }) => {
   useEffect(() => {
     signaling &&
-      insertStreamOnVideo(localVideoRef.current, (stream) => {
+      insertStreamOnVideo(localVideoRef?.current, (stream) => {
         peerConnectionHandler(stream, signaling, setCalleePeerConnection);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
