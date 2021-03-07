@@ -1,6 +1,6 @@
 import { STUN } from "../constants/webrtc";
 
-const peerConnectionHandler = async (stream, signaling, setPeerConnection) => {
+const peerConnectionHandler = (stream, signaling, setPeerConnection) => {
   if (signaling) {
     const servers = {
       iceServers: [{ urls: STUN }],

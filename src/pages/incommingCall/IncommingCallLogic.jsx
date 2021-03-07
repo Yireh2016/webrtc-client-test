@@ -1,9 +1,11 @@
 import React, { useContext, useRef, useEffect, useState, useMemo } from "react";
 import { observer } from "mobx-react-lite";
+import { useHistory } from "react-router-dom";
 
 import { signalingEvents } from "../../constants/signalingEvents";
 
 import stopStreamedVideo from "../../webrtc/stopStreamedVideo";
+import asyncCreateRemoteStream from "../../webrtc/asyncCreateRemoteStream";
 
 import { StoreContext } from "../../wrappers/MobxWrapper";
 import { Signaling } from "../../wrappers/WebSocketWrapper";
@@ -12,27 +14,33 @@ import useCreateCalleePeerConection from "../../hooks/useCreateCalleePeerConecti
 import useIncommingCallerOffer from "../../hooks/useIncommingCallerOffer";
 import useSendIce from "../../hooks/useSendIce";
 import useIncommingIce from "../../hooks/useIncommingIce";
+import useCallEnd from "../../hooks/useCallEnd";
 
 import IncommingCallUi from "./IncommingCallUi";
+import { routes } from "../../constants/routes";
 
 const IncommingCallLogic = observer(() => {
+  const history = useHistory();
+
   const signaling = useContext(Signaling);
 
   let remoteVideoRef = useRef();
   let localVideoRef = useRef();
+
   const [calleePeerConnection, setCalleePeerConnection] = useState(null);
+
   const {
     setIsLobbyVideoCallModal,
     incommingCallCaller,
     username,
     userList,
   } = useContext(StoreContext);
+
   const callee = useMemo(
     () => userList.filter((_user) => _user.user_id === username)[0],
     [userList, username]
   );
 
-  console.log("IncommingCallLogic", { calleePeerConnection });
   const asyncCalleeCreateAnswer = async (peerConnection) => {
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
@@ -49,16 +57,13 @@ const IncommingCallLogic = observer(() => {
     setCalleePeerConnection,
   });
 
-  const asyncCreateRemoteStream = async (remoteStream, peerConnection) => {
-    remoteVideoRef.current.srcObject = remoteStream;
-    peerConnection.addEventListener("track", async (event) => {
-      console.log("asyncCreateRemoteStream track", { event });
-      remoteStream.addTrack(event.track, remoteStream);
-    });
-  };
   useEffect(() => {
     calleePeerConnection &&
-      asyncCreateRemoteStream(new MediaStream(), calleePeerConnection);
+      asyncCreateRemoteStream(
+        remoteVideoRef,
+        new MediaStream(),
+        calleePeerConnection
+      );
   }, [calleePeerConnection]);
 
   useSendIce({
@@ -68,6 +73,26 @@ const IncommingCallLogic = observer(() => {
     caller: incommingCallCaller,
     emitter: "CALLEE",
   });
+
+  const endCallRemotelly = () => {
+    // calleePeerConnection && calleePeerConnection.close();
+    localVideoRef?.current?.srcObject &&
+      stopStreamedVideo(localVideoRef?.current);
+    remoteVideoRef?.current?.srcObject &&
+      stopStreamedVideo(remoteVideoRef?.current);
+    setCalleePeerConnection(null);
+  };
+
+  const endCall = () => {
+    endCallRemotelly();
+    signaling.send(signalingEvents.SEND_CALLEE_END_CALL, {
+      caller: incommingCallCaller,
+      callee,
+    });
+    history.push(routes.LOBBY);
+  };
+
+  useCallEnd(signaling, endCallRemotelly);
 
   useIncommingIce({
     signaling,
@@ -84,17 +109,6 @@ const IncommingCallLogic = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callerOffer, calleePeerConnection]);
 
-  const toogleCamera = () => {};
-
-  const toogleAudio = () => {};
-
-  const endCall = () => {
-    calleePeerConnection.close();
-    setIsLobbyVideoCallModal(false);
-    stopStreamedVideo(localVideoRef?.current);
-  };
-
-  // se crea la peer coneccion en el callee al aceptar la llamada
   useCreateCalleePeerConection({
     signaling,
     localVideoRef,
@@ -105,8 +119,6 @@ const IncommingCallLogic = observer(() => {
   // se le informa al caller que la llamada fue aceptada
   useEffect(() => {
     if (signaling && calleePeerConnection) {
-      console.log("useEffect", { calleePeerConnection, signaling });
-
       signaling.send(signalingEvents.SEND_CALLEE_CALL_ACEPTED, {
         caller: incommingCallCaller,
         callee,
@@ -116,13 +128,11 @@ const IncommingCallLogic = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [calleePeerConnection, signaling]);
 
-  const localVideo = (
-    <video autoPlay playsInline id="localVideo" ref={localVideoRef}></video>
-  );
+  const toogleCamera = () => {};
 
-  const remoteVideo = (
-    <video autoPlay playsInline id="remoteVideo" ref={remoteVideoRef}></video>
-  );
+  const toogleAudio = () => {};
+
+  // se crea la peer coneccion en el callee al aceptar la llamada
 
   return (
     <IncommingCallUi
@@ -130,8 +140,8 @@ const IncommingCallLogic = observer(() => {
         toogleCamera,
         endCall,
         toogleAudio,
-        remoteVideo,
-        localVideo,
+        remoteVideoRef,
+        localVideoRef,
       }}
     />
   );

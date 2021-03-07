@@ -9,8 +9,8 @@ const LobbyUi = ({
   endCall,
   toogleAudio,
   isMobible,
-  remoteVideo,
-  localVideo,
+  remoteVideoRef,
+  localVideoRef,
   lobbyVideo = null,
   userList,
   user,
@@ -36,8 +36,8 @@ const LobbyUi = ({
             toogleCamera,
             endCall,
             toogleAudio,
-            remoteVideo,
-            localVideo,
+            remoteVideoRef,
+            localVideoRef,
           }}
         />
       )}

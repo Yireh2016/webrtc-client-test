@@ -7,7 +7,6 @@ const useCalleeIceIn = ({ signaling, setIsLobbyVideoCallModal, endCall }) => {
       signaling.listen((eventName, ...args) => {
         switch (eventName) {
           case signalingEvents.CALLEE_CALL_REJECTED:
-            console.log("CALLEE_CALL_REJECTED", { args });
             setIsLobbyVideoCallModal(false);
             endCall();
             break;

@@ -3,6 +3,8 @@ import { observer } from "mobx-react-lite";
 import { useHistory } from "react-router-dom";
 import React, { useContext, useRef, useEffect, useState, useMemo } from "react";
 
+import logguer from "../../helpers/logguer";
+
 import LobbyUi from "./LobbyUi";
 
 import { StoreContext } from "../../wrappers/MobxWrapper";
@@ -14,6 +16,8 @@ import { signalingEvents } from "../../constants/signalingEvents";
 import stopStreamedVideo from "../../webrtc/stopStreamedVideo";
 import peerConnectionHandler from "../../webrtc/peerConnectionHandler";
 import insertStreamOnVideo from "../../webrtc/insertStreamOnVideo";
+import asyncCreateRemoteStream from "../../webrtc/asyncCreateRemoteStream";
+import getUserMediaAsync from "../../webrtc/getUserMediaAsync";
 
 import { events } from "../../constants/webrtc";
 
@@ -23,10 +27,10 @@ import useIncommingIce from "../../hooks/useIncommingIce";
 import useIncommingCalleeAnswer from "../../hooks/useIncommingCalleeAnswer";
 import useIncommingCallerCalling from "../../hooks/useIncommingCallerCalling";
 import useIncommingCalleeCallAccepted from "../../hooks/useIncommingCalleeCallAccepted";
+import useCallEnd from "../../hooks/useCallEnd";
 
 const LobbyLogic = observer(() => {
   const history = useHistory();
-  // const [calleePeerConnection, setCalleePeerConnection] = useState(null);
   const [callerPeerConnection, setCallerPeerConnection] = useState(null);
   const {
     username,
@@ -46,13 +50,6 @@ const LobbyLogic = observer(() => {
     [userList, username]
   );
 
-  console.log("LobbyLogic", { remoteVideoRef, localVideoRef });
-  useEffect(() => {
-    console.log("mounting LobbyLogic");
-    return () => {
-      console.log("unmounting LobbyLogic");
-    };
-  }, []);
   const asyncCallerCreateOffer = async (peerConnection) => {
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
@@ -73,7 +70,7 @@ const LobbyLogic = observer(() => {
         events.CONNECTION_STATE_CHANGE,
         (event) => {
           if (callerPeerConnection.connectionState === "connected") {
-            console.log("peers connected", { event });
+            logguer("peers connected", { event });
           }
         }
       );
@@ -109,16 +106,13 @@ const LobbyLogic = observer(() => {
     }
   }, [callerPeerConnection]);
 
-  const asyncCreateRemoteStream = async (remoteStream, peerConnection) => {
-    remoteVideoRef.current.srcObject = remoteStream;
-    peerConnection.addEventListener("track", async (event) => {
-      console.log("asyncCreateRemoteStream track", { event });
-      remoteStream.addTrack(event.track, remoteStream);
-    });
-  };
   useEffect(() => {
     callerPeerConnection &&
-      asyncCreateRemoteStream(new MediaStream(), callerPeerConnection);
+      asyncCreateRemoteStream(
+        remoteVideoRef,
+        new MediaStream(),
+        callerPeerConnection
+      );
   }, [callerPeerConnection]);
 
   const incommingCallCaller = useIncommingCallerCalling({ signaling });
@@ -131,11 +125,10 @@ const LobbyLogic = observer(() => {
     if (isLobbyVideoCallModal && localVideoRef?.current) {
       insertStreamOnVideo(localVideoRef?.current, (stream) => {
         peerConnectionHandler(stream, signaling, setCallerPeerConnection);
-      });
-
-      signaling.send(signalingEvents.SEND_CALLER_CALLING, {
-        caller,
-        callee,
+        signaling.send(signalingEvents.SEND_CALLER_CALLING, {
+          caller,
+          callee,
+        });
       });
     }
   }, [isLobbyVideoCallModal, localVideoRef?.current]);
@@ -146,14 +139,36 @@ const LobbyLogic = observer(() => {
   };
 
   const endCall = () => {
-    // callerPeerConnection.close();
-    setIsLobbyVideoCallModal(false);
-    stopStreamedVideo(localVideoRef?.current);
+    endCallRemotelly();
+    signaling.send(signalingEvents.SEND_CALLER_END_CALL, {
+      caller: incommingCallCaller,
+      callee,
+    });
   };
+
+  const endCallRemotelly = () => {
+    // callerPeerConnection && callerPeerConnection.close();
+    localVideoRef?.current?.srcObject &&
+      stopStreamedVideo(localVideoRef?.current);
+    remoteVideoRef?.current?.srcObject &&
+      stopStreamedVideo(remoteVideoRef?.current);
+    setCallerPeerConnection(null);
+    setIsLobbyVideoCallModal(false);
+  };
+
+  useCallEnd(signaling, endCallRemotelly);
 
   const toogleCamera = () => {};
 
-  const toogleAudio = () => {};
+  const toogleAudio = async () => {
+    const enumDevices = navigator.mediaDevices.enumerateDevices();
+    const supportedConstraints = navigator.mediaDevices.getSupportedConstraints()();
+    const stream = await getUserMediaAsync(navigator, {
+      audio: true,
+      video: true,
+    });
+    console.log("toogleAudio", { enumDevices, supportedConstraints, stream });
+  };
 
   const onAcceptIncommingCall = async () => {
     setIsIncommigCallModal(false);
@@ -166,14 +181,6 @@ const LobbyLogic = observer(() => {
     socket.emit(signalingEvents.CALLEE_CALL_REJECTED);
   };
 
-  const localVideo = (
-    <video autoPlay playsInline id="localVideo" ref={localVideoRef}></video>
-  );
-
-  const remoteVideo = (
-    <video autoPlay playsInline id="remoteVideo" ref={remoteVideoRef}></video>
-  );
-
   return (
     <div>
       <LobbyUi
@@ -182,8 +189,8 @@ const LobbyLogic = observer(() => {
           user: username,
           userList,
           onUserClick,
-          remoteVideo,
-          localVideo,
+          remoteVideoRef,
+          localVideoRef,
           isLobbyVideoCallModal,
           toogleCamera,
           endCall,

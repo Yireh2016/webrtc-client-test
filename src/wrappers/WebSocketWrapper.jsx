@@ -3,6 +3,7 @@ import { io } from "socket.io-client";
 import { WEBSOCKET_SERVER } from "../constants/websocketServer";
 import { observer } from "mobx-react-lite";
 import { StoreContext } from "./MobxWrapper";
+import logguer from "../helpers/logguer";
 
 export const Signaling = React.createContext();
 
@@ -11,7 +12,7 @@ class SignalingService {
     this.socket = socket;
     this.connect();
     this.socket.on("connect", () => {
-      console.log("connect", this.socket.id);
+      logguer("connect", this.socket.id);
     });
 
     this.socket.on("connect_error", () => {
@@ -19,19 +20,18 @@ class SignalingService {
     });
 
     this.socket.on("disconnect", () => {
-      console.log(this.socket.id);
+      logguer(this.socket.id);
     });
-    console.log("new SignalingService");
   }
 
   send(message, data) {
-    console.log(`signaling send`, { message, data });
+    logguer(`signaling send`, { message, data });
     this.socket.emit(message, data);
   }
 
   listen(callback) {
     this.socket.onAny((eventName, ...args) => {
-      console.log("listen", { eventName, ...args });
+      logguer("listen", { eventName, ...args });
       callback && callback(eventName, ...args);
     });
   }
@@ -45,7 +45,6 @@ const WebSocketWrapper = observer(({ children }) => {
   const context = useContext(StoreContext);
   const [webSocket, setWebSocket] = useState();
   const { username } = context;
-  console.log("WebSocketWrapper", { webSocket });
   useEffect(() => {
     if (username) {
       const socket = io(WEBSOCKET_SERVER, {

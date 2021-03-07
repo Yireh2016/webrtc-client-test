@@ -5,8 +5,8 @@ const IncommingCallUi = ({
   toogleCamera,
   endCall,
   toogleAudio,
-  remoteVideo,
-  localVideo,
+  remoteVideoRef,
+  localVideoRef,
 }) => {
   return (
     <VideoModal
@@ -14,8 +14,8 @@ const IncommingCallUi = ({
         toogleCamera,
         endCall,
         toogleAudio,
-        remoteVideo,
-        localVideo,
+        remoteVideoRef,
+        localVideoRef,
       }}
     />
   );
