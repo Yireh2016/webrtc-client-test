@@ -17,7 +17,7 @@ import stopStreamedVideo from "../../webrtc/stopStreamedVideo";
 import peerConnectionHandler from "../../webrtc/peerConnectionHandler";
 import insertStreamOnVideo from "../../webrtc/insertStreamOnVideo";
 import asyncCreateRemoteStream from "../../webrtc/asyncCreateRemoteStream";
-import getUserMediaAsync from "../../webrtc/getUserMediaAsync";
+import { toogleAudioTrack, toogleVideoTrack } from "../../webrtc/streamsToggle";
 
 import { events } from "../../constants/webrtc";
 
@@ -43,8 +43,11 @@ const LobbyLogic = observer(() => {
   let localVideoRef = useRef();
   const isMobible = useIsMobile();
   const signaling = useContext(Signaling);
+
+  const [stream, setStream] = useState();
   const [callee, setCallee] = useState();
   const [isIncommigCallModal, setIsIncommigCallModal] = useState(false);
+
   const caller = useMemo(
     () => userList.filter((_user) => _user.user_id === username)[0],
     [userList, username]
@@ -78,23 +81,14 @@ const LobbyLogic = observer(() => {
   }, [callerPeerConnection]);
   useIncommingCalleeAnswer(signaling, callerPeerConnection);
 
-  useSendIce({
-    signaling,
-    callerPeerConnection,
-    callee,
-    caller,
-    emitter: "CALLER",
-  });
+  useSendIce(signaling, callerPeerConnection, callee, caller, "CALLER");
 
   useIncommingCalleeCallAccepted({
     signaling,
     callerPeerConnection,
   });
 
-  useIncommingIce({
-    signaling,
-    callerPeerConnection,
-  });
+  useIncommingIce(signaling, callerPeerConnection);
 
   useEffect(() => {
     iscalleeCallAccepted && asyncCallerCreateOffer(callerPeerConnection);
@@ -124,6 +118,7 @@ const LobbyLogic = observer(() => {
   useEffect(() => {
     if (isLobbyVideoCallModal && localVideoRef?.current) {
       insertStreamOnVideo(localVideoRef?.current, (stream) => {
+        setStream(stream);
         peerConnectionHandler(stream, signaling, setCallerPeerConnection);
         signaling.send(signalingEvents.SEND_CALLER_CALLING, {
           caller,
@@ -158,16 +153,12 @@ const LobbyLogic = observer(() => {
 
   useCallEnd(signaling, endCallRemotelly);
 
-  const toogleCamera = () => {};
+  const toogleCamera = () => {
+    toogleVideoTrack(stream);
+  };
 
-  const toogleAudio = async () => {
-    const enumDevices = navigator.mediaDevices.enumerateDevices();
-    const supportedConstraints = navigator.mediaDevices.getSupportedConstraints()();
-    const stream = await getUserMediaAsync(navigator, {
-      audio: true,
-      video: true,
-    });
-    console.log("toogleAudio", { enumDevices, supportedConstraints, stream });
+  const toogleAudio = () => {
+    toogleAudioTrack(stream);
   };
 
   const onAcceptIncommingCall = async () => {

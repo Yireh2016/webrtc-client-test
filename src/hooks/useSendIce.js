@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { signalingEvents } from "../constants/signalingEvents";
 
-const useSendIce = ({ signaling, peerConnection, callee, caller, emitter }) => {
+const useSendIce = (signaling, peerConnection, callee, caller, emitter) => {
   useEffect(() => {
     if (signaling && peerConnection) {
       peerConnection.onicecandidate = ({ candidate }) => {

@@ -6,6 +6,7 @@ import { signalingEvents } from "../../constants/signalingEvents";
 
 import stopStreamedVideo from "../../webrtc/stopStreamedVideo";
 import asyncCreateRemoteStream from "../../webrtc/asyncCreateRemoteStream";
+import { toogleAudioTrack, toogleVideoTrack } from "../../webrtc/streamsToggle";
 
 import { StoreContext } from "../../wrappers/MobxWrapper";
 import { Signaling } from "../../wrappers/WebSocketWrapper";
@@ -29,12 +30,7 @@ const IncommingCallLogic = observer(() => {
 
   const [calleePeerConnection, setCalleePeerConnection] = useState(null);
 
-  const {
-    setIsLobbyVideoCallModal,
-    incommingCallCaller,
-    username,
-    userList,
-  } = useContext(StoreContext);
+  const { incommingCallCaller, username, userList } = useContext(StoreContext);
 
   const callee = useMemo(
     () => userList.filter((_user) => _user.user_id === username)[0],
@@ -51,11 +47,7 @@ const IncommingCallLogic = observer(() => {
     });
   };
 
-  const callerOffer = useIncommingCallerOffer({
-    signaling,
-    localVideoRef,
-    setCalleePeerConnection,
-  });
+  const callerOffer = useIncommingCallerOffer(signaling);
 
   useEffect(() => {
     calleePeerConnection &&
@@ -66,13 +58,13 @@ const IncommingCallLogic = observer(() => {
       );
   }, [calleePeerConnection]);
 
-  useSendIce({
+  useSendIce(
     signaling,
     calleePeerConnection,
     callee,
-    caller: incommingCallCaller,
-    emitter: "CALLEE",
-  });
+    incommingCallCaller,
+    "CALLEE"
+  );
 
   const endCallRemotelly = () => {
     // calleePeerConnection && calleePeerConnection.close();
@@ -94,10 +86,7 @@ const IncommingCallLogic = observer(() => {
 
   useCallEnd(signaling, endCallRemotelly);
 
-  useIncommingIce({
-    signaling,
-    calleePeerConnection,
-  });
+  useIncommingIce(signaling, calleePeerConnection);
 
   useEffect(() => {
     if (callerOffer && calleePeerConnection) {
@@ -109,7 +98,7 @@ const IncommingCallLogic = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callerOffer, calleePeerConnection]);
 
-  useCreateCalleePeerConection({
+  const stream = useCreateCalleePeerConection({
     signaling,
     localVideoRef,
     setCalleePeerConnection,
@@ -128,11 +117,15 @@ const IncommingCallLogic = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [calleePeerConnection, signaling]);
 
-  const toogleCamera = () => {};
-
-  const toogleAudio = () => {};
-
   // se crea la peer coneccion en el callee al aceptar la llamada
+
+  const toogleCamera = () => {
+    toogleVideoTrack(stream);
+  };
+
+  const toogleAudio = () => {
+    toogleAudioTrack(stream);
+  };
 
   return (
     <IncommingCallUi

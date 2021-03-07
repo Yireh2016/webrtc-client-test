@@ -1,10 +1,12 @@
 import { signalingEvents } from "../constants/signalingEvents";
 import { useEffect } from "react";
 import addIceCandidate from "../webrtc/addIceCandidate";
+import logguer from "../helpers/logguer";
 
-const useIncommingIce = ({ signaling, peerConnection }) => {
+const useIncommingIce = (signaling, peerConnection) => {
   useEffect(() => {
-    if (signaling) {
+    if (signaling && peerConnection) {
+      logguer("listening for incomming ice");
       signaling.listen((eventName, ...args) => {
         switch (eventName) {
           case signalingEvents.INCOMMING_CALLER_ICE:
@@ -20,7 +22,7 @@ const useIncommingIce = ({ signaling, peerConnection }) => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signaling]);
+  }, [signaling, peerConnection]);
 };
 
 export default useIncommingIce;

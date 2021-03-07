@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { signalingEvents } from "../constants/signalingEvents";
-// import peerConnectionHandler from "../webrtc/peerConnectionHandler";
-// import insertStreamOnVideo from "../webrtc/insertStreamOnVideo";
 
-const useIncommingCallerOffer = ({ signaling }) => {
+const useIncommingCallerOffer = (signaling) => {
   const [callerOffer, setCallerOffer] = useState();
   useEffect(() => {
     signaling &&

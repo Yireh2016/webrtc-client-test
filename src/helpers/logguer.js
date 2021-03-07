@@ -1,5 +1,5 @@
 const logguer = (...args) => {
-  const enableLogs = false;
+  const enableLogs = true;
   enableLogs && console.log(...args);
 };
 
