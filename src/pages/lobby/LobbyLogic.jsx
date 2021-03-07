@@ -13,7 +13,7 @@ import { Signaling } from "../../wrappers/WebSocketWrapper";
 import { routes } from "../../constants/routes";
 import { signalingEvents } from "../../constants/signalingEvents";
 
-import stopStreamedVideo from "../../webrtc/stopStreamedVideo";
+import endPeerConnectionHandler from "../../webrtc/endPeerConnectionHandler";
 import peerConnectionHandler from "../../webrtc/peerConnectionHandler";
 import insertStreamOnVideo from "../../webrtc/insertStreamOnVideo";
 import asyncCreateRemoteStream from "../../webrtc/asyncCreateRemoteStream";
@@ -21,12 +21,12 @@ import { toogleAudioTrack, toogleVideoTrack } from "../../webrtc/streamsToggle";
 
 import { events } from "../../constants/webrtc";
 
-import useSendIce from "../../hooks/useSendIce";
+import useSetIceArr from "../../hooks/useSetIceArr";
 import useIsMobile from "../../hooks/useIsMobile";
-import useIncommingIce from "../../hooks/useIncommingIce";
-import useIncommingCalleeAnswer from "../../hooks/useIncommingCalleeAnswer";
-import useIncommingCallerCalling from "../../hooks/useIncommingCallerCalling";
-import useIncommingCalleeCallAccepted from "../../hooks/useIncommingCalleeCallAccepted";
+import useAddRemoteIceCandidates from "../../hooks/useAddRemoteIceCandidates";
+import useSetRemoteDescription from "../../hooks/useSetRemoteDescription";
+import useSetCaller from "../../hooks/useSetCaller";
+import useIsOutgoingCallAcceptedByCallee from "../../hooks/useIsOutgoingCallAcceptedByCallee";
 import useCallEnd from "../../hooks/useCallEnd";
 
 const LobbyLogic = observer(() => {
@@ -47,6 +47,11 @@ const LobbyLogic = observer(() => {
   const [stream, setStream] = useState();
   const [callee, setCallee] = useState();
   const [isIncommigCallModal, setIsIncommigCallModal] = useState(false);
+  const [
+    isOutgoingCallAcceptedByCallee,
+    setIsOutgoingCallAcceptedByCallee,
+  ] = useState(false);
+  const [callerIceArr, setCallerIceArr] = useState([]);
 
   const caller = useMemo(
     () => userList.filter((_user) => _user.user_id === username)[0],
@@ -63,15 +68,17 @@ const LobbyLogic = observer(() => {
     });
   };
 
-  const iscalleeCallAccepted = useIncommingCalleeCallAccepted({
+  useIsOutgoingCallAcceptedByCallee(
     signaling,
-  });
+    setIsOutgoingCallAcceptedByCallee
+  );
 
   useEffect(() => {
     if (callerPeerConnection) {
       callerPeerConnection.addEventListener(
         events.CONNECTION_STATE_CHANGE,
         (event) => {
+          logguer("events.CONNECTION_STATE_CHANGE", { event });
           if (callerPeerConnection.connectionState === "connected") {
             logguer("peers connected", { event });
           }
@@ -79,20 +86,12 @@ const LobbyLogic = observer(() => {
       );
     }
   }, [callerPeerConnection]);
-  useIncommingCalleeAnswer(signaling, callerPeerConnection);
 
-  useSendIce(signaling, callerPeerConnection, callee, caller, "CALLER");
+  useSetRemoteDescription(signaling, callerPeerConnection);
 
-  useIncommingCalleeCallAccepted({
-    signaling,
-    callerPeerConnection,
-  });
+  useSetIceArr(signaling, callerPeerConnection, callerIceArr, setCallerIceArr);
 
-  useIncommingIce(signaling, callerPeerConnection);
-
-  useEffect(() => {
-    iscalleeCallAccepted && asyncCallerCreateOffer(callerPeerConnection);
-  }, [iscalleeCallAccepted]);
+  useAddRemoteIceCandidates(signaling, callerPeerConnection);
 
   useEffect(() => {
     if (callerPeerConnection) {
@@ -109,7 +108,7 @@ const LobbyLogic = observer(() => {
       );
   }, [callerPeerConnection]);
 
-  const incommingCallCaller = useIncommingCallerCalling({ signaling });
+  const incommingCallCaller = useSetCaller({ signaling });
 
   useEffect(() => {
     incommingCallCaller && setIsIncommigCallModal(true);
@@ -120,38 +119,39 @@ const LobbyLogic = observer(() => {
       insertStreamOnVideo(localVideoRef?.current, (stream) => {
         setStream(stream);
         peerConnectionHandler(stream, signaling, setCallerPeerConnection);
-        signaling.send(signalingEvents.SEND_CALLER_CALLING, {
-          caller,
-          callee,
-        });
       });
     }
   }, [isLobbyVideoCallModal, localVideoRef?.current]);
+
   const onUserClick = async (callee) => {
     setIsLobbyVideoCallModal(true);
-
     setCallee(callee);
   };
 
   const endCall = () => {
-    endCallRemotelly();
+    endPeerConnection();
     signaling.send(signalingEvents.SEND_CALLER_END_CALL, {
       caller: incommingCallCaller,
       callee,
     });
   };
 
-  const endCallRemotelly = () => {
-    // callerPeerConnection && callerPeerConnection.close();
-    localVideoRef?.current?.srcObject &&
-      stopStreamedVideo(localVideoRef?.current);
-    remoteVideoRef?.current?.srcObject &&
-      stopStreamedVideo(remoteVideoRef?.current);
+  const resetCallerState = () => {
     setCallerPeerConnection(null);
     setIsLobbyVideoCallModal(false);
+    setIsOutgoingCallAcceptedByCallee(false);
   };
 
-  useCallEnd(signaling, endCallRemotelly);
+  const endPeerConnection = () => {
+    endPeerConnectionHandler(
+      callerPeerConnection,
+      localVideoRef?.current,
+      remoteVideoRef?.current
+    );
+    resetCallerState();
+  };
+
+  useCallEnd(signaling, endPeerConnection);
 
   const toogleCamera = () => {
     toogleVideoTrack(stream);
@@ -168,8 +168,7 @@ const LobbyLogic = observer(() => {
   };
 
   const onRejectIncommingCall = () => {
-    const { socket } = signaling;
-    socket.emit(signalingEvents.CALLEE_CALL_REJECTED);
+    signaling.send(signalingEvents.CALLEE_CALL_REJECTED);
   };
 
   return (

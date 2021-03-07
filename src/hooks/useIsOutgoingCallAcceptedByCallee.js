@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { signalingEvents } from "../constants/signalingEvents";
 
-const useIncommingCalleeCallAccepted = ({ signaling }) => {
-  const [iscalleeCallAccepted, setIscalleeCallAccepted] = useState(false);
+const useIsOutgoingCallAcceptedByCallee = (
+  signaling,
+  setIscalleeCallAccepted
+) => {
   useEffect(() => {
     signaling &&
       signaling.listen((eventName) => {
@@ -12,7 +14,6 @@ const useIncommingCalleeCallAccepted = ({ signaling }) => {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signaling]);
-  return iscalleeCallAccepted;
 };
 
-export default useIncommingCalleeCallAccepted;
+export default useIsOutgoingCallAcceptedByCallee;

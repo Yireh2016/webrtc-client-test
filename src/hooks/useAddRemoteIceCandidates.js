@@ -3,17 +3,21 @@ import { useEffect } from "react";
 import addIceCandidate from "../webrtc/addIceCandidate";
 import logguer from "../helpers/logguer";
 
-const useIncommingIce = (signaling, peerConnection) => {
+const useAddRemoteIceCandidates = (signaling, peerConnection) => {
   useEffect(() => {
     if (signaling && peerConnection) {
       logguer("listening for incomming ice");
       signaling.listen((eventName, ...args) => {
         switch (eventName) {
           case signalingEvents.INCOMMING_CALLER_ICE:
-            addIceCandidate(args[0].callerIce, peerConnection);
+            args[0].callerIce.forEach((candidate) => {
+              addIceCandidate(candidate, peerConnection);
+            });
             break;
           case signalingEvents.INCOMMING_CALLEE_ICE:
-            addIceCandidate(args[0].calleeIce, peerConnection);
+            args[0].calleeIce.forEach((candidate) => {
+              addIceCandidate(candidate, peerConnection);
+            });
             break;
 
           default:
@@ -25,4 +29,4 @@ const useIncommingIce = (signaling, peerConnection) => {
   }, [signaling, peerConnection]);
 };
 
-export default useIncommingIce;
+export default useAddRemoteIceCandidates;

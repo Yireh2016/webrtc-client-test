@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { signalingEvents } from "../constants/signalingEvents";
 
-const useIncommingCalleeAnswer = (signaling, callerPeerConnection) => {
+const useSetRemoteDescription = (signaling, callerPeerConnection) => {
   useEffect(() => {
     signaling &&
       callerPeerConnection &&
@@ -16,4 +16,4 @@ const useIncommingCalleeAnswer = (signaling, callerPeerConnection) => {
   }, [signaling, callerPeerConnection]);
 };
 
-export default useIncommingCalleeAnswer;
+export default useSetRemoteDescription;
