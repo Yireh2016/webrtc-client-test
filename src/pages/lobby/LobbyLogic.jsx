@@ -25,9 +25,9 @@ import useSetIceArr from "../../hooks/useSetIceArr";
 import useIsMobile from "../../hooks/useIsMobile";
 import useAddRemoteIceCandidates from "../../hooks/useAddRemoteIceCandidates";
 import useSetRemoteDescription from "../../hooks/useSetRemoteDescription";
-import useSetCaller from "../../hooks/useSetCaller";
-import useIsOutgoingCallAcceptedByCallee from "../../hooks/useIsOutgoingCallAcceptedByCallee";
 import useCallEnd from "../../hooks/useCallEnd";
+import useIncommingCallerOffer from "../../hooks/useIncommingCallerOffer";
+import useGetCallerOnIncommingCall from "../../hooks/useGetCallerOnIncommingCall";
 
 const LobbyLogic = observer(() => {
   const history = useHistory();
@@ -46,130 +46,89 @@ const LobbyLogic = observer(() => {
 
   const [stream, setStream] = useState();
   const [callee, setCallee] = useState();
-  const [isIncommigCallModal, setIsIncommigCallModal] = useState(false);
   const [
     isOutgoingCallAcceptedByCallee,
     setIsOutgoingCallAcceptedByCallee,
   ] = useState(false);
   const [callerIceArr, setCallerIceArr] = useState([]);
+  const [isIncommigCallModal, setIsIncommigCallModal] = useState(false);
 
   const caller = useMemo(
     () => userList.filter((_user) => _user.user_id === username)[0],
     [userList, username]
   );
 
-  const asyncCallerCreateOffer = async (peerConnection) => {
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    signaling.send(signalingEvents.SEND_CALLER_OFFER, {
-      caller,
-      callee,
-      offer,
-    });
-  };
-
-  useIsOutgoingCallAcceptedByCallee(
-    signaling,
-    setIsOutgoingCallAcceptedByCallee
-  );
+  const callerOnIncommingCall = useGetCallerOnIncommingCall(signaling);
 
   useEffect(() => {
-    if (callerPeerConnection) {
-      callerPeerConnection.addEventListener(
-        events.CONNECTION_STATE_CHANGE,
-        (event) => {
-          logguer("events.CONNECTION_STATE_CHANGE", { event });
-          if (callerPeerConnection.connectionState === "connected") {
-            logguer("peers connected", { event });
-          }
+    if (callerOnIncommingCall) {
+      setIsIncommigCallModal(true);
+    }
+  }, [callerOnIncommingCall]);
+
+  useEffect(() => {
+    signaling &&
+      signaling.listen((eventName) => {
+        switch (eventName) {
+          case signalingEvents.INCOMMING_CALLEE_CALL_REJECTED:
+            setCallee(undefined);
+            setIsLobbyVideoCallModal(false);
+            break;
+
+          default:
+            break;
         }
-      );
-    }
-  }, [callerPeerConnection]);
-
-  useSetRemoteDescription(signaling, callerPeerConnection);
-
-  useSetIceArr(signaling, callerPeerConnection, callerIceArr, setCallerIceArr);
-
-  useAddRemoteIceCandidates(signaling, callerPeerConnection);
-
-  useEffect(() => {
-    if (callerPeerConnection) {
-      asyncCallerCreateOffer(callerPeerConnection);
-    }
-  }, [callerPeerConnection]);
-
-  useEffect(() => {
-    callerPeerConnection &&
-      asyncCreateRemoteStream(
-        remoteVideoRef,
-        new MediaStream(),
-        callerPeerConnection
-      );
-  }, [callerPeerConnection]);
-
-  const incommingCallCaller = useSetCaller({ signaling });
-
-  useEffect(() => {
-    incommingCallCaller && setIsIncommigCallModal(true);
-  }, [incommingCallCaller]);
-
-  useEffect(() => {
-    if (isLobbyVideoCallModal && localVideoRef?.current) {
-      insertStreamOnVideo(localVideoRef?.current, (stream) => {
-        setStream(stream);
-        peerConnectionHandler(stream, signaling, setCallerPeerConnection);
       });
-    }
-  }, [isLobbyVideoCallModal, localVideoRef?.current]);
+  }, [signaling]);
 
-  const onUserClick = async (callee) => {
+  useEffect(() => {
+    signaling &&
+      signaling.listen((eventName) => {
+        switch (eventName) {
+          case signalingEvents.INCOMMING_CALLEE_CALL_ACCEPTED:
+            insertStreamOnVideo(localVideoRef?.current, (stream) => {
+              setStream(stream);
+              peerConnectionHandler(stream, signaling, setCallerPeerConnection);
+            });
+            break;
+
+          default:
+            break;
+        }
+      });
+  }, [signaling]);
+
+  useCreateO;
+
+  const onUserClick = (callee) => {
     setIsLobbyVideoCallModal(true);
     setCallee(callee);
-  };
-
-  const endCall = () => {
-    endPeerConnection();
-    signaling.send(signalingEvents.SEND_CALLER_END_CALL, {
-      caller: incommingCallCaller,
+    signaling.send(signalingEvents.SEND_CALLER_CALLING, {
+      caller,
       callee,
     });
   };
 
-  const resetCallerState = () => {
-    setCallerPeerConnection(null);
-    setIsLobbyVideoCallModal(false);
-    setIsOutgoingCallAcceptedByCallee(false);
-  };
-
-  const endPeerConnection = () => {
-    endPeerConnectionHandler(
-      callerPeerConnection,
-      localVideoRef?.current,
-      remoteVideoRef?.current
-    );
-    resetCallerState();
-  };
-
-  useCallEnd(signaling, endPeerConnection);
-
-  const toogleCamera = () => {
-    toogleVideoTrack(stream);
-  };
-
-  const toogleAudio = () => {
-    toogleAudioTrack(stream);
-  };
-
-  const onAcceptIncommingCall = async () => {
-    setIsIncommigCallModal(false);
-    setIncommingCallCaller(incommingCallCaller);
+  const onAcceptIncommingCall = () => {
+    setIncommingCallCaller(callerOnIncommingCall);
+    signaling.send(signalingEvents.SEND_CALLEE_CALL_ACCEPTED, {
+      caller: callerOnIncommingCall,
+    });
     history.push(routes.INCOMMING_CALL);
   };
 
   const onRejectIncommingCall = () => {
-    signaling.send(signalingEvents.CALLEE_CALL_REJECTED);
+    setIncommingCallCaller(undefined);
+    setIsIncommigCallModal(false);
+
+    signaling.send(signalingEvents.SEND_CALLEE_CALL_REJECTED, {
+      caller: callerOnIncommingCall,
+    });
   };
+
+  const toogleCamera = () => {};
+  const endCall = () => {};
+  const toogleAudio = () => {};
 
   return (
     <div>
@@ -188,7 +147,7 @@ const LobbyLogic = observer(() => {
           isIncommigCallModal,
           onAcceptIncommingCall,
           onRejectIncommingCall,
-          caller: caller?.user_id || "",
+          caller: callerOnIncommingCall?.user_id || "",
         }}
       />
     </div>

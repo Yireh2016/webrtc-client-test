@@ -38,97 +38,13 @@ const IncommingCallLogic = observer(() => {
     [userList, username]
   );
 
-  const asyncCalleeCreateAnswer = async (peerConnection) => {
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-    signaling.send(signalingEvents.SEND_CALLEE_ANSWER, {
-      caller: incommingCallCaller,
-      callee,
-      answer,
-    });
-    signaling.send(signalingEvents.SEND_CALLEE_ICE, {
-      callee,
-      calleeIce: calleeIceArr,
-      caller: incommingCallCaller,
-    });
-  };
-
-  const callerOffer = useIncommingCallerOffer(signaling);
-
-  useEffect(() => {
-    calleePeerConnection &&
-      asyncCreateRemoteStream(
-        remoteVideoRef,
-        new MediaStream(),
-        calleePeerConnection
-      );
-  }, [calleePeerConnection]);
-
-  useSetIceArr(signaling, calleePeerConnection, calleeIceArr, setCalleeIceArr);
-
-  const resetCalleeState = () => {
-    setCalleePeerConnection(null);
-  };
-
-  const endPeerConnection = () => {
-    endPeerConnectionHandler(
-      calleePeerConnection,
-      localVideoRef?.current,
-      remoteVideoRef?.current
-    );
-    resetCalleeState();
-  };
-
-  const endCall = () => {
-    endPeerConnection();
-    signaling.send(signalingEvents.SEND_CALLEE_END_CALL, {
-      caller: incommingCallCaller,
-      callee,
-    });
-    history.push(routes.LOBBY);
-  };
-
-  useCallEnd(signaling, endPeerConnection);
-
-  useAddRemoteIceCandidates(signaling, calleePeerConnection);
-
-  useEffect(() => {
-    if (callerOffer && calleePeerConnection) {
-      calleePeerConnection?.setRemoteDescription(
-        new RTCSessionDescription(callerOffer)
-      );
-      asyncCalleeCreateAnswer(calleePeerConnection);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callerOffer, calleePeerConnection]);
-
-  const stream = useCreateCalleePeerConection({
-    signaling,
-    localVideoRef,
-    setCalleePeerConnection,
-  });
-
-  // una vez creada la peerConnection del lado del callee
-  // se le informa al caller que la llamada fue aceptada
-  // useEffect(() => {
-  //   if (signaling && calleePeerConnection) {
-  //     signaling.send(signalingEvents.SEND_CALLEE_CALL_ACEPTED, {
-  //       caller: incommingCallCaller,
-  //       callee,
-  //     });
-  //   }
-
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [calleePeerConnection, signaling]);
-
-  // se crea la peer coneccion en el callee al aceptar la llamada
-
+  const endCall = () => {};
   const toogleCamera = () => {
-    toogleVideoTrack(stream);
+    // toogleVideoTrack(stream);
   };
 
   const toogleAudio = () => {
-    toogleAudioTrack(stream);
+    // toogleAudioTrack(stream);
   };
 
   return (
@@ -139,6 +55,10 @@ const IncommingCallLogic = observer(() => {
         toogleAudio,
         remoteVideoRef,
         localVideoRef,
+        // isIncommigCallModal,
+        // caller,
+        // onAcceptIncommingCall,
+        // onRejectIncommingCall,
       }}
     />
   );
