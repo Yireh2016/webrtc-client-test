@@ -7,6 +7,7 @@ import LobbyUi from "./LobbyUi";
 
 import { StoreContext } from "../../wrappers/MobxWrapper";
 import { Signaling } from "../../wrappers/WebSocketWrapper";
+import { PeerConnectionContext } from "../../wrappers/PeerConnectionWrapper";
 
 import { routes } from "../../constants/routes";
 import { signalingEvents } from "../../constants/signalingEvents";
@@ -41,6 +42,9 @@ const LobbyLogic = observer(() => {
     setIncommingCallCaller,
     setUsername,
   } = useContext(StoreContext);
+
+  const callerPeerConnectionContainer = useContext(PeerConnectionContext);
+
   let remoteVideoRef = useRef();
   let localVideoRef = useRef();
   const isMobible = useIsMobile();
@@ -96,6 +100,7 @@ const LobbyLogic = observer(() => {
               insertStreamOnVideo(localVideoRef.current, (stream) => {
                 setCallerStream(stream);
                 peerConnectionHandler(
+                  callerPeerConnectionContainer,
                   stream,
                   signaling,
                   setCallerPeerConnection
@@ -212,7 +217,7 @@ const LobbyLogic = observer(() => {
 
   const terminateCall = () => {
     endPeerConnectionHandler(
-      callerPeerConnection,
+      callerPeerConnectionContainer,
       setCallerPeerConnection,
       localVideoRef.current,
       remoteVideoRef.current
@@ -223,7 +228,7 @@ const LobbyLogic = observer(() => {
 
   const endCall = () => {
     endPeerConnectionHandler(
-      callerPeerConnection,
+      callerPeerConnectionContainer,
       setCallerPeerConnection,
       localVideoRef.current,
       remoteVideoRef.current

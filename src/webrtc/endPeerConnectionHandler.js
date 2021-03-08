@@ -1,7 +1,7 @@
 import stopStreamedVideo from "./stopStreamedVideo";
 
 const endPeerConnectionHandler = (
-  peerConnection,
+  callerPeerConnectionContainer,
   setPeerConnection,
   localVideo,
   remoteVideo
@@ -9,18 +9,7 @@ const endPeerConnectionHandler = (
   stopStreamedVideo(remoteVideo);
 
   stopStreamedVideo(localVideo);
-
-  if (peerConnection) {
-    peerConnection.ontrack = null;
-    peerConnection.onremovetrack = null;
-    peerConnection.onremovestream = null;
-    peerConnection.onicecandidate = null;
-    peerConnection.oniceconnectionstatechange = null;
-    peerConnection.onsignalingstatechange = null;
-    peerConnection.onicegatheringstatechange = null;
-    peerConnection.onnegotiationneeded = null;
-  }
-  peerConnection = null;
+  callerPeerConnectionContainer.destroyPeerConnection();
   setPeerConnection(null);
 };
 

@@ -11,6 +11,7 @@ import { toogleAudioTrack, toogleVideoTrack } from "../../webrtc/streamsToggle";
 
 import { StoreContext } from "../../wrappers/MobxWrapper";
 import { Signaling } from "../../wrappers/WebSocketWrapper";
+import { PeerConnectionContext } from "../../wrappers/PeerConnectionWrapper";
 
 import useAddRemoteIceCandidates from "../../hooks/useAddRemoteIceCandidates";
 import useSendIceCandidates from "../../hooks/useSendIceCandidates";
@@ -23,6 +24,7 @@ const IncommingCallLogic = observer(() => {
   const history = useHistory();
 
   const signaling = useContext(Signaling);
+  const calleePeerConnectionContainer = useContext(PeerConnectionContext);
 
   let remoteVideoRef = useRef();
   let localVideoRef = useRef();
@@ -53,6 +55,7 @@ const IncommingCallLogic = observer(() => {
             localVideoRef?.current &&
               insertStreamOnVideo(localVideoRef.current, (stream) => {
                 peerConnectionHandler(
+                  calleePeerConnectionContainer,
                   stream,
                   signaling,
                   setCalleePeerConnection
@@ -132,7 +135,7 @@ const IncommingCallLogic = observer(() => {
 
   const terminateCall = () => {
     endPeerConnectionHandler(
-      calleePeerConnection,
+      calleePeerConnectionContainer,
       setCalleePeerConnection,
       localVideoRef.current,
       remoteVideoRef.current
@@ -143,7 +146,7 @@ const IncommingCallLogic = observer(() => {
 
   const endCall = () => {
     endPeerConnectionHandler(
-      calleePeerConnection,
+      calleePeerConnectionContainer,
       setCalleePeerConnection,
       localVideoRef.current,
       remoteVideoRef.current
