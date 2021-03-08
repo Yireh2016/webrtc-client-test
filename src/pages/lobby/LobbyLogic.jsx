@@ -227,16 +227,10 @@ const LobbyLogic = observer(() => {
   };
 
   const endCall = () => {
-    endPeerConnectionHandler(
-      callerPeerConnectionContainer,
-      setCallerPeerConnection,
-      localVideoRef.current,
-      remoteVideoRef.current
-    );
     signaling.send(signalingEvents.SEND_CALLER_END_CALL, {
       callee,
     });
-    resetCallerState();
+    terminateCall();
   };
   const toogleCamera = () => {
     callerStream && toogleVideoTrack(callerStream);

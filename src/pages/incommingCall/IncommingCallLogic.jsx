@@ -145,17 +145,11 @@ const IncommingCallLogic = observer(() => {
   };
 
   const endCall = () => {
-    endPeerConnectionHandler(
-      calleePeerConnectionContainer,
-      setCalleePeerConnection,
-      localVideoRef.current,
-      remoteVideoRef.current
-    );
     signaling.send(signalingEvents.SEND_CALLEE_END_CALL, {
       caller: incommingCallCaller,
     });
-    resetCalleeState();
-    history.push(routes.LOBBY);
+
+    terminateCall();
   };
 
   const toogleCamera = () => {
