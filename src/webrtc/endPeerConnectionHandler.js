@@ -6,18 +6,6 @@ const endPeerConnectionHandler = (
   localVideo,
   remoteVideo
 ) => {
-  // peerConnection && peerConnection.close();
-  // localVideo?.srcObject && stopStreamedVideo(localVideo);
-  // remoteVideo?.srcObject && stopStreamedVideo(remoteVideo);
-  console.log({
-    peerConnection,
-    setPeerConnection,
-    localVideo,
-    localObj: localVideo?.srcObject,
-    remoteVideo,
-    remoteObj: remoteVideo?.srcObject,
-  });
-
   stopStreamedVideo(remoteVideo);
 
   stopStreamedVideo(localVideo);
@@ -31,7 +19,6 @@ const endPeerConnectionHandler = (
     peerConnection.onsignalingstatechange = null;
     peerConnection.onicegatheringstatechange = null;
     peerConnection.onnegotiationneeded = null;
-    // peerConnection.close();
   }
   peerConnection = null;
   setPeerConnection(null);

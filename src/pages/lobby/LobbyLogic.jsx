@@ -39,6 +39,7 @@ const LobbyLogic = observer(() => {
     isLobbyVideoCallModal,
     setIsLobbyVideoCallModal,
     setIncommingCallCaller,
+    setUsername,
   } = useContext(StoreContext);
   let remoteVideoRef = useRef();
   let localVideoRef = useRef();
@@ -91,8 +92,6 @@ const LobbyLogic = observer(() => {
       signaling.listen((eventName) => {
         switch (eventName) {
           case signalingEvents.INCOMMING_CALLEE_CALL_ACCEPTED:
-            logguer("INCOMMING_CALLEE_CALL_ACCEPTED", { localVideoRef });
-
             localVideoRef?.current &&
               insertStreamOnVideo(localVideoRef.current, (stream) => {
                 setCallerStream(stream);
@@ -159,6 +158,22 @@ const LobbyLogic = observer(() => {
     }
   }, [callerPeerConnection]);
 
+  useEffect(() => {
+    if (signaling && localVideoRef) {
+      signaling.listen((eventName) => {
+        switch (eventName) {
+          case signalingEvents.INCOMMING_CALLEE_END_CALL:
+            terminateCall();
+            break;
+
+          default:
+            break;
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signaling, localVideoRef]);
+
   const onUserClick = (callee) => {
     setIsLobbyVideoCallModal(true);
     setCallee(callee);
@@ -195,6 +210,17 @@ const LobbyLogic = observer(() => {
     setIncommingCallCaller(null);
   };
 
+  const terminateCall = () => {
+    endPeerConnectionHandler(
+      callerPeerConnection,
+      setCallerPeerConnection,
+      localVideoRef.current,
+      remoteVideoRef.current
+    );
+
+    resetCallerState();
+  };
+
   const endCall = () => {
     endPeerConnectionHandler(
       callerPeerConnection,
@@ -202,6 +228,9 @@ const LobbyLogic = observer(() => {
       localVideoRef.current,
       remoteVideoRef.current
     );
+    signaling.send(signalingEvents.SEND_CALLER_END_CALL, {
+      callee,
+    });
     resetCallerState();
   };
   const toogleCamera = () => {
@@ -210,6 +239,11 @@ const LobbyLogic = observer(() => {
 
   const toogleAudio = () => {
     callerStream && toogleAudioTrack(callerStream);
+  };
+
+  const onLogout = () => {
+    setUsername("");
+    signaling.disconnect();
   };
 
   return (
@@ -230,6 +264,7 @@ const LobbyLogic = observer(() => {
           onAcceptIncommingCall,
           onRejectIncommingCall,
           caller: callerOnIncommingCall?.user_id || "",
+          onLogout,
         }}
       />
     </div>

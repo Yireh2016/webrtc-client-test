@@ -20,7 +20,7 @@ class SignalingService {
     });
 
     this.socket.on("disconnect", () => {
-      logguer(this.socket.id);
+      logguer("disconnect", this.socket.id);
     });
   }
 
@@ -38,6 +38,10 @@ class SignalingService {
 
   connect() {
     this.socket.connect();
+  }
+
+  disconnect() {
+    this.socket.disconnect();
   }
 }
 

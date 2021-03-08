@@ -18,7 +18,6 @@ import useOnTrack from "../../hooks/useOnTrack";
 
 import IncommingCallUi from "./IncommingCallUi";
 import { routes } from "../../constants/routes";
-import logguer from "../../helpers/logguer";
 
 const IncommingCallLogic = observer(() => {
   const history = useHistory();
@@ -50,9 +49,7 @@ const IncommingCallLogic = observer(() => {
       signaling.listen((eventName, ...args) => {
         switch (eventName) {
           case signalingEvents.INCOMMING_CALLER_OFFER:
-            localVideoRef?.current &&
-              logguer("INCOMMING_CALLER_OFFER", { localVideoRef });
-            setCallerOffer(args[0].offer);
+            localVideoRef?.current && setCallerOffer(args[0].offer);
             localVideoRef?.current &&
               insertStreamOnVideo(localVideoRef.current, (stream) => {
                 peerConnectionHandler(
@@ -62,6 +59,22 @@ const IncommingCallLogic = observer(() => {
                 );
                 setCalleeStream(stream);
               });
+            break;
+
+          default:
+            break;
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signaling, localVideoRef]);
+
+  useEffect(() => {
+    if (signaling && localVideoRef) {
+      signaling.listen((eventName) => {
+        switch (eventName) {
+          case signalingEvents.INCOMMING_CALLER_END_CALL:
+            terminateCall();
             break;
 
           default:
@@ -115,6 +128,16 @@ const IncommingCallLogic = observer(() => {
     setCallerOffer(undefined);
     setCalleeAnswer(undefined);
     setIncommingCallCaller(null);
+  };
+
+  const terminateCall = () => {
+    endPeerConnectionHandler(
+      calleePeerConnection,
+      setCalleePeerConnection,
+      localVideoRef.current,
+      remoteVideoRef.current
+    );
+    resetCalleeState();
     history.push(routes.LOBBY);
   };
 
@@ -125,8 +148,13 @@ const IncommingCallLogic = observer(() => {
       localVideoRef.current,
       remoteVideoRef.current
     );
+    signaling.send(signalingEvents.SEND_CALLEE_END_CALL, {
+      caller: incommingCallCaller,
+    });
     resetCalleeState();
+    history.push(routes.LOBBY);
   };
+
   const toogleCamera = () => {
     calleeStream && toogleVideoTrack(calleeStream);
   };

@@ -3,6 +3,7 @@ import styled from "styled-components";
 import ChatPal from "../../components/ChatPal";
 import VideoModal from "../../components/VideoModal";
 import IncommigCallModal from "../../components/IncommingCallModal";
+import LogOut from "../../assets/logOut";
 
 const LobbyUi = ({
   toogleCamera,
@@ -20,9 +21,13 @@ const LobbyUi = ({
   onAcceptIncommingCall,
   onRejectIncommingCall,
   caller,
+  onLogout,
 }) => {
   return (
     <LobbyLayout>
+      <LogOutContainer onClick={onLogout} data-id="LogOutContainer">
+        <LogOut />
+      </LogOutContainer>
       {isIncommigCallModal && (
         <IncommigCallModal
           caller={caller}
@@ -48,6 +53,16 @@ const LobbyUi = ({
     </LobbyLayout>
   );
 };
+
+const LogOutContainer = styled.div`
+  position: fixed;
+  right: 11px;
+  top: 6px;
+  padding: 10px;
+  :hover {
+    cursor: pointer;
+  }
+`;
 
 const LeftAside = styled.div`
   height: 100vh;
