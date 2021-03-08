@@ -3,8 +3,6 @@ import { observer } from "mobx-react-lite";
 import { useHistory } from "react-router-dom";
 import React, { useContext, useRef, useEffect, useState, useMemo } from "react";
 
-import logguer from "../../helpers/logguer";
-
 import LobbyUi from "./LobbyUi";
 
 import { StoreContext } from "../../wrappers/MobxWrapper";
@@ -16,22 +14,25 @@ import { signalingEvents } from "../../constants/signalingEvents";
 import endPeerConnectionHandler from "../../webrtc/endPeerConnectionHandler";
 import peerConnectionHandler from "../../webrtc/peerConnectionHandler";
 import insertStreamOnVideo from "../../webrtc/insertStreamOnVideo";
-import asyncCreateRemoteStream from "../../webrtc/asyncCreateRemoteStream";
 import { toogleAudioTrack, toogleVideoTrack } from "../../webrtc/streamsToggle";
 
-import { events } from "../../constants/webrtc";
-
-import useSetIceArr from "../../hooks/useSetIceArr";
 import useIsMobile from "../../hooks/useIsMobile";
 import useAddRemoteIceCandidates from "../../hooks/useAddRemoteIceCandidates";
-import useSetRemoteDescription from "../../hooks/useSetRemoteDescription";
-import useCallEnd from "../../hooks/useCallEnd";
-import useIncommingCallerOffer from "../../hooks/useIncommingCallerOffer";
 import useGetCallerOnIncommingCall from "../../hooks/useGetCallerOnIncommingCall";
+import useCreateCallerOffer from "../../hooks/useCreateCallerOffer";
+import useSendIceCandidates from "../../hooks/useSendIceCandidates";
+import useOnTrack from "../../hooks/useOnTrack";
+import logguer from "../../helpers/logguer";
 
 const LobbyLogic = observer(() => {
   const history = useHistory();
+
+  const [callerOffer, setCallerOffer] = useState(false);
   const [callerPeerConnection, setCallerPeerConnection] = useState(null);
+  const [callerStream, setCallerStream] = useState();
+  const [callee, setCallee] = useState();
+  const [isIncommigCallModal, setIsIncommigCallModal] = useState(false);
+
   const {
     username,
     userList,
@@ -43,15 +44,6 @@ const LobbyLogic = observer(() => {
   let localVideoRef = useRef();
   const isMobible = useIsMobile();
   const signaling = useContext(Signaling);
-
-  const [stream, setStream] = useState();
-  const [callee, setCallee] = useState();
-  const [
-    isOutgoingCallAcceptedByCallee,
-    setIsOutgoingCallAcceptedByCallee,
-  ] = useState(false);
-  const [callerIceArr, setCallerIceArr] = useState([]);
-  const [isIncommigCallModal, setIsIncommigCallModal] = useState(false);
 
   const caller = useMemo(
     () => userList.filter((_user) => _user.user_id === username)[0],
@@ -81,24 +73,91 @@ const LobbyLogic = observer(() => {
       });
   }, [signaling]);
 
+  useSendIceCandidates(
+    signaling,
+    callerPeerConnection,
+    caller,
+    callee,
+    "CALLER"
+  );
+
+  useAddRemoteIceCandidates(signaling, callerPeerConnection);
+
+  useOnTrack(callerPeerConnection, remoteVideoRef?.current);
+
   useEffect(() => {
     signaling &&
+      localVideoRef &&
       signaling.listen((eventName) => {
         switch (eventName) {
           case signalingEvents.INCOMMING_CALLEE_CALL_ACCEPTED:
-            insertStreamOnVideo(localVideoRef?.current, (stream) => {
-              setStream(stream);
-              peerConnectionHandler(stream, signaling, setCallerPeerConnection);
-            });
+            logguer("INCOMMING_CALLEE_CALL_ACCEPTED", { localVideoRef });
+
+            localVideoRef?.current &&
+              insertStreamOnVideo(localVideoRef.current, (stream) => {
+                setCallerStream(stream);
+                peerConnectionHandler(
+                  stream,
+                  signaling,
+                  setCallerPeerConnection
+                );
+              });
             break;
 
           default:
             break;
         }
       });
-  }, [signaling]);
+  }, [signaling, localVideoRef]);
 
-  useCreateO;
+  useEffect(() => {
+    if (signaling && callerOffer) {
+      signaling.send(signalingEvents.SEND_CALLER_OFFER, {
+        caller,
+        callee,
+        offer: callerOffer,
+      });
+    }
+  }, [signaling, callerOffer]);
+
+  const asyncSetRemoteDescription = async (
+    description,
+    callerPeerConnection
+  ) => {
+    description &&
+      (await callerPeerConnection.setRemoteDescription(description));
+  };
+
+  useEffect(() => {
+    signaling &&
+      callerPeerConnection &&
+      signaling.listen((eventName, ...args) => {
+        switch (eventName) {
+          case signalingEvents.INCOMMING_CALLEE_ANSWER:
+            const { answer } = args[0];
+            const description = new RTCSessionDescription(answer);
+            console.log({ description, answer });
+            asyncSetRemoteDescription(description, callerPeerConnection);
+            break;
+
+          default:
+            break;
+        }
+      });
+  }, [signaling, callerPeerConnection]);
+
+  useCreateCallerOffer(callerPeerConnection, setCallerOffer);
+
+  useEffect(() => {
+    if (callerPeerConnection) {
+      callerPeerConnection.onsignalingstatechange = (event) => {
+        logguer("callerPeerConnection.onsignalingstatechange ", {
+          state: callerPeerConnection.signalingState,
+          event,
+        });
+      };
+    }
+  }, [callerPeerConnection]);
 
   const onUserClick = (callee) => {
     setIsLobbyVideoCallModal(true);
@@ -126,9 +185,32 @@ const LobbyLogic = observer(() => {
     });
   };
 
-  const toogleCamera = () => {};
-  const endCall = () => {};
-  const toogleAudio = () => {};
+  const resetCallerState = () => {
+    setCallerOffer(false);
+    setCallerPeerConnection(null);
+    setCallerStream(undefined);
+    setCallee(undefined);
+    setIsIncommigCallModal(false);
+    setIsLobbyVideoCallModal(false);
+    setIncommingCallCaller(null);
+  };
+
+  const endCall = () => {
+    endPeerConnectionHandler(
+      callerPeerConnection,
+      setCallerPeerConnection,
+      localVideoRef.current,
+      remoteVideoRef.current
+    );
+    resetCallerState();
+  };
+  const toogleCamera = () => {
+    callerStream && toogleVideoTrack(callerStream);
+  };
+
+  const toogleAudio = () => {
+    callerStream && toogleAudioTrack(callerStream);
+  };
 
   return (
     <div>

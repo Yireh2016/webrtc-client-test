@@ -43,7 +43,7 @@ const VideoModal = ({
 
 const LocalVideo = styled.video`
   width: 150px;
-  heigth: 150px;
+  height: 150px;
   position: fixed;
   z-index: 1000;
   bottom: 10px;
@@ -51,7 +51,7 @@ const LocalVideo = styled.video`
 `;
 const RemoteVideo = styled.video`
   width: 100%;
-  heigth: 100%;
+  height: 100%;
 `;
 
 const ControllersLayout = styled.div`
