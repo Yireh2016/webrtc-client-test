@@ -219,8 +219,8 @@ const LobbyLogic = observer(() => {
     endPeerConnectionHandler(
       callerPeerConnectionContainer,
       setCallerPeerConnection,
-      localVideoRef.current,
-      remoteVideoRef.current
+      document.querySelector("[data-id='localVideo']"),
+      document.querySelector("[data-id='remoteVideo']")
     );
 
     resetCallerState();

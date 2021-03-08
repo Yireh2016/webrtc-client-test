@@ -137,8 +137,8 @@ const IncommingCallLogic = observer(() => {
     endPeerConnectionHandler(
       calleePeerConnectionContainer,
       setCalleePeerConnection,
-      localVideoRef.current,
-      remoteVideoRef.current
+      document.querySelector("[data-id='localVideo']"),
+      document.querySelector("[data-id='remoteVideo']")
     );
     resetCalleeState();
     history.push(routes.LOBBY);

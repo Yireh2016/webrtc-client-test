@@ -11,6 +11,7 @@ const VideoModal = ({
 }) => {
   const localVideo = (
     <LocalVideo
+      data-id="localVideo"
       autoPlay
       playsInline
       id="localVideo"
@@ -20,6 +21,7 @@ const VideoModal = ({
 
   const remoteVideo = (
     <RemoteVideo
+      data-id="remoteVideo"
       autoPlay
       playsInline
       id="remoteVideo"
