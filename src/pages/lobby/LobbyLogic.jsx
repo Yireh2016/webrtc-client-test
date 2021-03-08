@@ -24,6 +24,8 @@ import useCreateCallerOffer from "../../hooks/useCreateCallerOffer";
 import useSendIceCandidates from "../../hooks/useSendIceCandidates";
 import useOnTrack from "../../hooks/useOnTrack";
 import logguer from "../../helpers/logguer";
+import useLogWebRtcEvents from "../../hooks/useLogWebrtcEvents";
+import useTerminateCallOnConnected from "../../hooks/useTerminateCallOnConnected";
 
 const LobbyLogic = observer(() => {
   const history = useHistory();
@@ -33,6 +35,12 @@ const LobbyLogic = observer(() => {
   const [callerStream, setCallerStream] = useState();
   const [callee, setCallee] = useState();
   const [isIncommigCallModal, setIsIncommigCallModal] = useState(false);
+  const [isCallTerminated, setIsCallTerminated] = useState(false);
+  const [
+    isCallerRejectedBeforeAnswer,
+    setIsCallerRejectedBeforeAnswer,
+  ] = useState(false);
+  const [isCalleeAcceptedCall, setIsCalleeAcceptedCall] = useState(false);
 
   const {
     username,
@@ -96,7 +104,9 @@ const LobbyLogic = observer(() => {
       signaling.listen((eventName) => {
         switch (eventName) {
           case signalingEvents.INCOMMING_CALLEE_CALL_ACCEPTED:
+            setIsCalleeAcceptedCall(true);
             localVideoRef?.current &&
+              !isCallerRejectedBeforeAnswer &&
               insertStreamOnVideo(localVideoRef.current, (stream) => {
                 setCallerStream(stream);
                 peerConnectionHandler(
@@ -112,10 +122,10 @@ const LobbyLogic = observer(() => {
             break;
         }
       });
-  }, [signaling, localVideoRef]);
+  }, [signaling, localVideoRef, isCallerRejectedBeforeAnswer]);
 
   useEffect(() => {
-    if (signaling && callerOffer) {
+    if (signaling && callerOffer && callee && caller) {
       signaling.send(signalingEvents.SEND_CALLER_OFFER, {
         caller,
         callee,
@@ -140,7 +150,6 @@ const LobbyLogic = observer(() => {
           case signalingEvents.INCOMMING_CALLEE_ANSWER:
             const { answer } = args[0];
             const description = new RTCSessionDescription(answer);
-            console.log({ description, answer });
             asyncSetRemoteDescription(description, callerPeerConnection);
             break;
 
@@ -152,23 +161,39 @@ const LobbyLogic = observer(() => {
 
   useCreateCallerOffer(callerPeerConnection, setCallerOffer);
 
-  useEffect(() => {
-    if (callerPeerConnection) {
-      callerPeerConnection.onsignalingstatechange = (event) => {
-        logguer("callerPeerConnection.onsignalingstatechange ", {
-          state: callerPeerConnection.signalingState,
-          event,
-        });
-      };
-    }
-  }, [callerPeerConnection]);
+  useLogWebRtcEvents(callerPeerConnection);
+
+  const terminateCall = () => {
+    endPeerConnectionHandler(
+      callerPeerConnectionContainer,
+      setCallerPeerConnection,
+      document.querySelector("[data-id='localVideo']"),
+      document.querySelector("[data-id='remoteVideo']")
+    );
+
+    resetCallerState();
+  };
+
+  useTerminateCallOnConnected(
+    callerPeerConnection,
+    isCallTerminated,
+    terminateCall
+  );
 
   useEffect(() => {
-    if (signaling && localVideoRef) {
+    if (isCallTerminated && callerPeerConnection) {
+      callerPeerConnection.connectionState === "connected" && terminateCall();
+    } else if (isCallTerminated && isCallerRejectedBeforeAnswer) {
+      terminateCall();
+    }
+  }, [isCallTerminated, callerPeerConnection]);
+
+  useEffect(() => {
+    if (signaling) {
       signaling.listen((eventName) => {
         switch (eventName) {
           case signalingEvents.INCOMMING_CALLEE_END_CALL:
-            terminateCall();
+            setIsCallTerminated(true);
             break;
 
           default:
@@ -177,7 +202,23 @@ const LobbyLogic = observer(() => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signaling, localVideoRef]);
+  }, [signaling]);
+
+  useEffect(() => {
+    if (signaling) {
+      signaling.listen((eventName) => {
+        switch (eventName) {
+          case signalingEvents.INCOMMING_CALLER_END_CALL:
+            setIsCallTerminated(true);
+            break;
+
+          default:
+            break;
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signaling]);
 
   const onUserClick = (callee) => {
     setIsLobbyVideoCallModal(true);
@@ -189,6 +230,10 @@ const LobbyLogic = observer(() => {
   };
 
   const onAcceptIncommingCall = () => {
+    if (isCallTerminated) {
+      terminateCall();
+      return;
+    }
     setIncommingCallCaller(callerOnIncommingCall);
     signaling.send(signalingEvents.SEND_CALLEE_CALL_ACCEPTED, {
       caller: callerOnIncommingCall,
@@ -213,24 +258,19 @@ const LobbyLogic = observer(() => {
     setIsIncommigCallModal(false);
     setIsLobbyVideoCallModal(false);
     setIncommingCallCaller(null);
-  };
-
-  const terminateCall = () => {
-    endPeerConnectionHandler(
-      callerPeerConnectionContainer,
-      setCallerPeerConnection,
-      document.querySelector("[data-id='localVideo']"),
-      document.querySelector("[data-id='remoteVideo']")
-    );
-
-    resetCallerState();
+    setIsCallTerminated(false);
+    setIsCallerRejectedBeforeAnswer(false);
+    setIsCalleeAcceptedCall(false);
   };
 
   const endCall = () => {
+    if (!isCalleeAcceptedCall) {
+      setIsCallerRejectedBeforeAnswer(true);
+    }
     signaling.send(signalingEvents.SEND_CALLER_END_CALL, {
       callee,
     });
-    terminateCall();
+    setIsCallTerminated(true);
   };
   const toogleCamera = () => {
     callerStream && toogleVideoTrack(callerStream);

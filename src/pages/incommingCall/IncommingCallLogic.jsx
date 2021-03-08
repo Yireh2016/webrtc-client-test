@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useContext, useRef, useEffect, useState, useMemo } from "react";
 import { observer } from "mobx-react-lite";
 import { useHistory } from "react-router-dom";
@@ -20,6 +21,10 @@ import useOnTrack from "../../hooks/useOnTrack";
 import IncommingCallUi from "./IncommingCallUi";
 import { routes } from "../../constants/routes";
 
+import logguer from "../../helpers/logguer";
+import useLogWebRtcEvents from "../../hooks/useLogWebrtcEvents";
+import useTerminateCallOnConnected from "../../hooks/useTerminateCallOnConnected";
+
 const IncommingCallLogic = observer(() => {
   const history = useHistory();
 
@@ -33,6 +38,7 @@ const IncommingCallLogic = observer(() => {
   const [calleeStream, setCalleeStream] = useState();
   const [callerOffer, setCallerOffer] = useState();
   const [calleeAnswer, setCalleeAnswer] = useState();
+  const [isCallTerminated, setIsCallTerminated] = useState(false);
 
   const {
     incommingCallCaller,
@@ -72,12 +78,37 @@ const IncommingCallLogic = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signaling, localVideoRef]);
 
+  useLogWebRtcEvents(calleePeerConnection);
+
+  const terminateCall = () => {
+    endPeerConnectionHandler(
+      calleePeerConnectionContainer,
+      setCalleePeerConnection,
+      document.querySelector("[data-id='localVideo']"),
+      document.querySelector("[data-id='remoteVideo']")
+    );
+    resetCalleeState();
+    history.push(routes.LOBBY);
+  };
+
+  useTerminateCallOnConnected(
+    calleePeerConnection,
+    isCallTerminated,
+    terminateCall
+  );
+
   useEffect(() => {
-    if (signaling && localVideoRef) {
+    if (isCallTerminated && calleePeerConnection) {
+      calleePeerConnection.connectionState === "connected" && terminateCall();
+    }
+  }, [isCallTerminated, calleePeerConnection]);
+
+  useEffect(() => {
+    if (signaling) {
       signaling.listen((eventName) => {
         switch (eventName) {
           case signalingEvents.INCOMMING_CALLER_END_CALL:
-            terminateCall();
+            setIsCallTerminated(true);
             break;
 
           default:
@@ -86,10 +117,10 @@ const IncommingCallLogic = observer(() => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signaling, localVideoRef]);
+  }, [signaling]);
 
   useEffect(() => {
-    if (calleeAnswer) {
+    if (calleeAnswer && incommingCallCaller && callee) {
       signaling.send(signalingEvents.SEND_CALLEE_ANSWER, {
         answer: calleeAnswer,
         caller: incommingCallCaller,
@@ -131,25 +162,14 @@ const IncommingCallLogic = observer(() => {
     setCallerOffer(undefined);
     setCalleeAnswer(undefined);
     setIncommingCallCaller(null);
-  };
-
-  const terminateCall = () => {
-    endPeerConnectionHandler(
-      calleePeerConnectionContainer,
-      setCalleePeerConnection,
-      document.querySelector("[data-id='localVideo']"),
-      document.querySelector("[data-id='remoteVideo']")
-    );
-    resetCalleeState();
-    history.push(routes.LOBBY);
+    setIsCallTerminated(false);
   };
 
   const endCall = () => {
     signaling.send(signalingEvents.SEND_CALLEE_END_CALL, {
       caller: incommingCallCaller,
     });
-
-    terminateCall();
+    setIsCallTerminated(true);
   };
 
   const toogleCamera = () => {

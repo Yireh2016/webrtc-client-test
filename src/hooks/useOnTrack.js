@@ -4,7 +4,6 @@ const useOnTrack = (peerConnection, remoteVideo) => {
   useEffect(() => {
     if (peerConnection && remoteVideo) {
       peerConnection.ontrack = (event) => {
-        console.log("ontrack", { peerConnection, remoteVideo, event });
         const track = event.streams[0];
         remoteVideo.srcObject = track;
       };

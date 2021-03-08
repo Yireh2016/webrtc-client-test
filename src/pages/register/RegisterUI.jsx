@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import Button from "../../components/Button";
 import { H2 } from "../../components/Texts";
 
 const RegisterUI = ({ setUserId, userId, onDone, onUserKeyDown }) => {
@@ -24,27 +25,27 @@ const RegisterUI = ({ setUserId, userId, onDone, onUserKeyDown }) => {
   );
 };
 
-const Button = styled.button`
-  background-color: ${({ theme }) => theme.palette.button};
-  color: ${({ theme }) => theme.palette.text};
-  font-weight: bold;
-  padding: 12px 0;
-  min-width: 212px;
-  border: none;
-  border-radius: 8px;
+// const Button = styled.button`
+//   background-color: ${({ theme }) => theme.palette.button};
+//   color: ${({ theme }) => theme.palette.text};
+//   font-weight: bold;
+//   padding: 12px 0;
+//   min-width: 212px;
+//   border: none;
+//   border-radius: 8px;
 
-  :focus {
-    outline: none;
-  }
+//   :focus {
+//     outline: none;
+//   }
 
-  :active {
-    background-color: transparent;
-  }
+//   :active {
+//     background-color: transparent;
+//   }
 
-  :hover {
-    cursor: pointer;
-  }
-`;
+//   :hover {
+//     cursor: pointer;
+//   }
+// `;
 
 const FormLayout = styled.div`
   display: flex;
