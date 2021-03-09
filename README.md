@@ -5,13 +5,30 @@ here you can see the desired final design https://www.figma.com/file/EfmR27y7XnO
 It should run in your local by running
 
 npm install
+
 npm start
 
-It will run on http://localhost:3000
+You should set some env variables on a .env file at the root of your directory:
+
+REACT_APP_WSS_SERVER= [where the backend code is running ej localhost:8080]
+REACT_APP_STUN=[a stun url ej: stun:stun.l.google.com:19302]
+REACT_APP_TURN=[a turn url ej: turn:nudsmb.viagsddenie.cfda]
+REACT_APP_TURN_USERNAME=[stun username]
+REACT_APP_TURN_CREDENTIAL=[stun password]
 
 Remember to clone the server side too at git@gitlab.avantica.avanticatec.net:jainer.munoz/webrtc_web_example_server.git.
 
-This is a create react app project so enjoy the rest of the README
+# Demo App
+
+You can play with the demo app at:
+
+https://webrtc-test-client-yo.herokuapp.com/
+
+NOTE: check backend is up and running by visiting https://webrtc-server-test.jainermunoz.repl.co/ first
+
+This is a create react app project so read the rest of the README
+
+Enjoy XD !!!
 
 # Getting Started with Create React App
 
