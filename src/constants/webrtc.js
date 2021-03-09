@@ -1,4 +1,4 @@
-export const STUN = "stun:stun.l.google.com:19302";
+export const STUN = `${process.env.REACT_APP_STUN}`;
 
 export const events = {
   ICE_CANDIDATE: "icecandidate",
