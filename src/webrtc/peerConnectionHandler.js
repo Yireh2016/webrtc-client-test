@@ -8,7 +8,16 @@ const peerConnectionHandler = (
 ) => {
   if (signaling) {
     const servers = {
-      iceServers: [{ urls: STUN }],
+      iceServers: [
+        {
+          urls: `${process.env.REACT_APP_TURN}`,
+          username: `${process.env.REACT_APP_TURN_USERNAME}`,
+          credential: `${process.env.REACT_APP_TURN_CREDENTIAL}`,
+        },
+        {
+          urls: STUN,
+        },
+      ],
     };
     peerConnectionContainer.createPeerConnection(servers);
 
