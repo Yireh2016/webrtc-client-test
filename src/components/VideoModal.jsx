@@ -17,6 +17,7 @@ const VideoModal = ({
       playsInline
       id="localVideo"
       ref={localVideoRef}
+      muted
     ></LocalVideo>
   );
 
