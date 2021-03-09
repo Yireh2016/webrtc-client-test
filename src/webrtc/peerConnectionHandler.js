@@ -1,11 +1,18 @@
 import { STUN } from "../constants/webrtc";
 
-const peerConnectionHandler = (stream, signaling, setPeerConnection) => {
+const peerConnectionHandler = (
+  peerConnectionContainer,
+  stream,
+  signaling,
+  setPeerConnection
+) => {
   if (signaling) {
     const servers = {
       iceServers: [{ urls: STUN }],
     };
-    const peerConnection = new RTCPeerConnection(servers);
+    peerConnectionContainer.createPeerConnection(servers);
+
+    const peerConnection = peerConnectionContainer.getPeerConnection();
     stream
       .getTracks()
       .forEach((track) => peerConnection.addTrack(track, stream));

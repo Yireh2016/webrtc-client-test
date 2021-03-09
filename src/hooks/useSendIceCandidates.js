@@ -12,6 +12,8 @@ const useSendIceCandidates = (
     if (signaling && peerConnection) {
       peerConnection.onicecandidate = ({ candidate }) => {
         candidate &&
+          callee &&
+          caller &&
           signaling.send(signalingEvents[`SEND_${emitter}_ICE`], {
             callee,
             caller,

@@ -10,29 +10,32 @@ import { routes } from "./constants/routes";
 import WebSocketWrapper from "./wrappers/WebSocketWrapper";
 import AuthWrapper from "./wrappers/AuthWrapper";
 import MobxWrapper from "./wrappers/MobxWrapper";
+import PeerConnectionWrapper from "./wrappers/PeerConnectionWrapper";
 
 function App() {
   return (
     <MobxWrapper>
-      <ThemeProvider theme={theme}>
-        <WebSocketWrapper>
-          <Router>
-            <Switch>
-              <AuthWrapper>
-                <Route exact path={routes.LOBBY}>
-                  <LobbyLogic />
-                </Route>
-                <Route exact path={routes.HOME}>
-                  <RegisterLogic />
-                </Route>
-                <Route exact path={routes.INCOMMING_CALL}>
-                  <IncommingCallLogic />
-                </Route>
-              </AuthWrapper>
-            </Switch>
-          </Router>
-        </WebSocketWrapper>
-      </ThemeProvider>
+      <PeerConnectionWrapper>
+        <ThemeProvider theme={theme}>
+          <WebSocketWrapper>
+            <Router>
+              <Switch>
+                <AuthWrapper>
+                  <Route exact path={routes.LOBBY}>
+                    <LobbyLogic />
+                  </Route>
+                  <Route exact path={routes.HOME}>
+                    <RegisterLogic />
+                  </Route>
+                  <Route exact path={routes.INCOMMING_CALL}>
+                    <IncommingCallLogic />
+                  </Route>
+                </AuthWrapper>
+              </Switch>
+            </Router>
+          </WebSocketWrapper>
+        </ThemeProvider>
+      </PeerConnectionWrapper>
     </MobxWrapper>
   );
 }
