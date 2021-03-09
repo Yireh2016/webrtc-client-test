@@ -1,3 +1,18 @@
+# WebRTC starter client project
+
+here you can see the desired final design https://www.figma.com/file/EfmR27y7XnOtpM13jAsjqG/webrtc-mini-project?node-id=2%3A161
+
+It should run in your local by running
+
+npm install
+npm start
+
+It will run on http://localhost:3000
+
+Remember to clone the server side too at git@gitlab.avantica.avanticatec.net:jainer.munoz/webrtc_web_example_server.git.
+
+This is a create react app project so enjoy the rest of the README
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
