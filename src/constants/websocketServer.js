@@ -1,1 +1,1 @@
-export const WEBSOCKET_SERVER = "localhost:8080";
+export const WEBSOCKET_SERVER = `${process.env.REACT_APP_WSS_SERVER}`;
