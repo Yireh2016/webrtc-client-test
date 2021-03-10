@@ -17,6 +17,7 @@ class PeerConnectionContainer {
       this.peerConnection.onsignalingstatechange = null;
       this.peerConnection.onicegatheringstatechange = null;
       this.peerConnection.onnegotiationneeded = null;
+      this.peerConnection.close()
     }
     this.peerConnection = null;
   }

@@ -6,9 +6,9 @@ const endPeerConnectionHandler = (
   localVideo,
   remoteVideo
 ) => {
-  callerPeerConnectionContainer.destroyPeerConnection();
   stopStreamedVideo(remoteVideo);
   stopStreamedVideo(localVideo);
+  callerPeerConnectionContainer.destroyPeerConnection();
   setPeerConnection(null);
 };
 

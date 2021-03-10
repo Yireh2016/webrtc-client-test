@@ -86,18 +86,6 @@ const LobbyLogic = observer(() => {
       });
   }, [signaling]);
 
-  useSendIceCandidates(
-    signaling,
-    callerPeerConnection,
-    caller,
-    callee,
-    "CALLER"
-  );
-
-  useAddRemoteIceCandidates(signaling, callerPeerConnection);
-
-  useOnTrack(callerPeerConnection, remoteVideoRef?.current);
-
   useEffect(() => {
     signaling &&
       localVideoRef &&
@@ -124,23 +112,6 @@ const LobbyLogic = observer(() => {
       });
   }, [signaling, localVideoRef, isCallerRejectedBeforeAnswer]);
 
-  useEffect(() => {
-    if (signaling && callerOffer && callee && caller) {
-      signaling.send(signalingEvents.SEND_CALLER_OFFER, {
-        caller,
-        callee,
-        offer: callerOffer,
-      });
-    }
-  }, [signaling, callerOffer]);
-
-  const asyncSetRemoteDescription = async (
-    description,
-    callerPeerConnection
-  ) => {
-    description &&
-      (await callerPeerConnection.setRemoteDescription(description));
-  };
 
   useEffect(() => {
     signaling &&
@@ -159,35 +130,6 @@ const LobbyLogic = observer(() => {
       });
   }, [signaling, callerPeerConnection]);
 
-  useCreateCallerOffer(callerPeerConnection, setCallerOffer);
-
-  useLogWebRtcEvents(callerPeerConnection);
-
-  const terminateCall = () => {
-    endPeerConnectionHandler(
-      callerPeerConnectionContainer,
-      setCallerPeerConnection,
-      document.querySelector("[data-id='localVideo']"),
-      document.querySelector("[data-id='remoteVideo']")
-    );
-
-    resetCallerState();
-  };
-
-  useTerminateCallOnConnected(
-    callerPeerConnection,
-    isCallTerminated,
-    terminateCall
-  );
-
-  useEffect(() => {
-    if (isCallTerminated && callerPeerConnection) {
-      callerPeerConnection.connectionState === "connected" && terminateCall();
-    } else if (isCallTerminated && isCallerRejectedBeforeAnswer) {
-      terminateCall();
-    }
-  }, [isCallTerminated, callerPeerConnection]);
-
   useEffect(() => {
     if (signaling) {
       signaling.listen((eventName) => {
@@ -201,7 +143,7 @@ const LobbyLogic = observer(() => {
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [signaling]);
 
   useEffect(() => {
@@ -217,8 +159,83 @@ const LobbyLogic = observer(() => {
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [signaling]);
+
+
+  useSendIceCandidates(
+    signaling,
+    callerPeerConnection,
+    caller,
+    callee,
+    "CALLER"
+  );
+
+  useAddRemoteIceCandidates(signaling, callerPeerConnection);
+
+  useOnTrack(callerPeerConnection, remoteVideoRef?.current);
+
+ 
+
+  useEffect(() => {
+    if (signaling && callerOffer && callee && caller) {
+      signaling.send(signalingEvents.SEND_CALLER_OFFER, {
+        caller,
+        callee,
+        offer: callerOffer,
+      });
+    }
+  }, [signaling, callerOffer]);
+
+  const asyncSetRemoteDescription = async (
+    description,
+    callerPeerConnection
+  ) => {
+    description &&
+      (await callerPeerConnection.setRemoteDescription(description));
+  };
+
+
+
+  useCreateCallerOffer(callerPeerConnection, setCallerOffer);
+
+  useLogWebRtcEvents(callerPeerConnection);
+
+  const terminateCall = () => {
+    endPeerConnectionHandler(
+      callerPeerConnectionContainer,
+      setCallerPeerConnection,
+      document.querySelector("[data-id='localVideo']"),
+      document.querySelector("[data-id='remoteVideo']")
+    );
+
+    resetCallerState();
+  };
+
+  // useTerminateCallOnConnected(
+  //   callerPeerConnection,
+  //   isCallTerminated,
+  //   terminateCall
+  // );
+
+  // useEffect(() => {
+  //   if (isCallTerminated && callerPeerConnection) {
+  //     callerPeerConnection.connectionState === "connected" && terminateCall();
+  //   } else if (isCallTerminated && isCallerRejectedBeforeAnswer) {
+  //     terminateCall();
+  //   }
+  // }, [isCallTerminated, callerPeerConnection]);
+
+    useEffect(() => {
+    if (isCallTerminated && callerPeerConnection) {
+       terminateCall();
+       setIsCallTerminated(false)
+    }
+  }, [isCallTerminated, callerPeerConnection]);
+
+
+
+
 
   const onUserClick = (callee) => {
     setIsLobbyVideoCallModal(true);
